@@ -1,0 +1,9 @@
+#game {
+	text-align: center;
+}
+
+#game > canvas {
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 3em;
+}
