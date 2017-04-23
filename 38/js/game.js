@@ -32,6 +32,9 @@ window.onload = function() {
     ground = game.add.sprite(100, 330, 'ground');
     avatar = game.add.sprite(312, 250, 'avatar');
 
+    let keyboard = game.add.sprite(160, 350, 'keyboard');
+    keyboard.scale.setTo(0.5, 0.5);
+
     // add groups
     walls = game.add.group();
 
@@ -98,6 +101,7 @@ window.onload = function() {
 
   function preload () {
     game.load.image('background', 'res/img/background.png');
+    game.load.image('keyboard', 'res/img/keyboard.png');
     game.load.image('roof', 'res/img/roof.png');
     game.load.image('wall', 'res/img/wall.png');
     game.load.image('ground', 'res/img/ground.png');
