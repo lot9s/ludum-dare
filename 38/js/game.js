@@ -15,6 +15,8 @@ let scoreTensText = null;
 let scoreDigitText = null;
 let score = 0;
 
+let victoryText = null;
+
 
 // background
 let walls = null;
@@ -30,6 +32,7 @@ let enemyTimer = null;
 let avatar = null;
 
 let bootsOnGround = false;
+let victoryState = false;
 let wadCount = 0;
 
 // sound
@@ -38,6 +41,7 @@ let bgmGame = null;
 let sfxDeath = null;
 let sfxFastMove = null;
 let sfxKill = null;
+let sfxVictory = null;
 
 
 
@@ -101,11 +105,20 @@ function createText() {
     fill: "#ffffff"
   };
 
+  // score text
   scoreTenThousandsText = game.add.text(30, 30, "0", textStyle);
   scoreThousandsText = game.add.text(30, 90, "0", textStyle);
   scoreHundredsText = game.add.text(30, 150, "0", textStyle);
   scoreTensText = game.add.text(30, 210, "0", textStyle);
   scoreDigitText = game.add.text(30, 270, "0", textStyle);
+
+  // victory text
+  victoryText = game.add.text(game.world.centerX,
+                              game.world.centerY,
+                              "Victory!",
+                              textStyle);
+  victoryText.anchor.setTo(0.5, 0.5);
+  victoryText.visible = false;
 }
 
 function createUI() {
@@ -156,6 +169,8 @@ window.onload = function() {
     // --- add physics ---
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
+    victoryState = false;
+
     createStage();
     createAvatar();
     createUI();
@@ -170,6 +185,7 @@ window.onload = function() {
     sfxDeath = game.add.audio('death');
     sfxFastMove = game.add.audio('fast-move');
     sfxKill = game.add.audio('kill');
+    sfxVictory = game.add.audio('victory');
 
     bgmGame = game.add.audio('bgm');
     bgmGame.loop = true;
@@ -177,6 +193,11 @@ window.onload = function() {
   }
 
   function handleInput() {
+    // do nothing if player has won
+    if (score == 99999) {
+      return;
+    }
+
     let arrowKeysDown = cursors.left.isDown || cursors.right.isDown;
     let wadKeysDown = cursors.w.isDown || cursors.a.isDown || cursors.d.isDown
 
@@ -235,6 +256,7 @@ window.onload = function() {
 
     // enemy
     game.load.image('enemy', 'res/img/enemy.png');
+    game.load.image('enemy-special', 'res/img/enemy-special.png');
 
     // avatar
     game.load.image('avatar', 'res/img/avatar.png');
@@ -245,6 +267,10 @@ window.onload = function() {
     game.load.audio('death', 'res/sfx/death.wav');
     game.load.audio('fast-move', 'res/sfx/fast-move.wav');
     game.load.audio('kill', 'res/sfx/kill.wav');
+    game.load.audio(
+      'victory',
+      'res/sfx/270545__littlerobotsoundfactory__jingle-win-01.wav'
+    );
   }
 
   function render() {
@@ -265,6 +291,11 @@ window.onload = function() {
     if (energy == 0) {
       avatar.loadTexture('avatar');
     }
+
+    // render victory text
+    if (score == 99999) {
+      victoryText.visible = true;
+    }
   }
 
   function restart() {
@@ -273,6 +304,8 @@ window.onload = function() {
     restartTimer.add(5000, function() {
       score = 0;
       energy = 1000;
+      enemies = [];
+
       game.state.restart();
     });
 
@@ -280,16 +313,48 @@ window.onload = function() {
   }
 
   function spawnEnemy() {
-    let enemy = game.add.sprite(game.rnd.between(111, 521), 
-                                game.rnd.between( 51, 321), 
-                                'enemy');
+    if (enemies.length < 128) {
+      // create an enemy with some randomness
+      let enemy = null;
+      if (game.rnd.between(0, 100) > 2) {
+        enemy = game.add.sprite(game.rnd.between(111, 521), 
+                                    game.rnd.between( 51, 271), 
+                                    'enemy');
+      } else {
+        enemy = game.add.sprite(game.rnd.between(111, 521), 
+                                    game.rnd.between( 51, 271), 
+                                    'enemy-special');
+      }
 
 
-    game.physics.arcade.enable(enemy);
-    enemy.body.bounce.y = 0.5;
-    enemy.body.gravity.y = 10;
+      game.physics.arcade.enable(enemy);
+      enemy.body.bounce.y = game.rnd.between(0, 1);
+      enemy.body.gravity.y = game.rnd.between(10, 100);
+      enemy.body.velocity.x = game.rnd.between(-50, 50);
 
-    enemies.push(enemy);
+      enemies.push(enemy);
+
+      // create a row of enemies
+      let randEffect = game.rnd.between(0, 100);
+      let randVelocity = enemy.body.velocity.x;
+      if (randEffect <= 10 && score > 50 && enemies.length + 64 < 128) {
+        let startX = game.rnd.between(111, 449);
+        for (var j = 0; j < 8; j++) {
+          for (var i = 0; i < 8; i++) {
+            enemy = game.add.sprite(startX + (i*8), 51 + (j*8), 'enemy');
+            game.physics.arcade.enable(enemy);
+            enemy.body.bounce.y = 0.5;
+            enemy.body.gravity.y = 50;
+
+            if (score > 300 && game.rnd.between(0, 100) > 50) {
+              enemy.body.velocity.x = randVelocity;
+            }
+
+            enemies.push(enemy);
+          }
+        }
+      }
+    }
   }
 
   function update() {
@@ -297,6 +362,7 @@ window.onload = function() {
     bootsOnGround = game.physics.arcade.collide(avatar, ground);
     game.physics.arcade.collide(avatar, walls);
 
+    // detect collisions between enemies and other things
     for (var i = enemies.length - 1; i >= 0; i--) {
       let enemy = enemies[i];
 
@@ -304,14 +370,25 @@ window.onload = function() {
       game.physics.arcade.collide(enemy, walls);
       game.physics.arcade.collide(enemy, ground);
 
+      // detect collisions between enemies and other enemies
+      for (var j = i - 1; j >= 0; j--) {
+        game.physics.arcade.collide(enemies[i], enemies[j]);
+      }
+
       // detect collisions between avatar and enemies
-      if (game.physics.arcade.collide(avatar, enemies[i])) {
+      if (game.physics.arcade.overlap(avatar, enemies[i])) {
         if (wadCount > 0) {
           // enemy defeat!
           enemy.kill();
           enemies.splice(i, 1);
 
-          score = score + 1;
+          // assign points
+          if (enemy.key == 'enemy') {
+            score = score + 1;
+          } else {
+            score = score + Math.min(99999 - score, 1000);
+          }
+
           sfxKill.play();
         } else {
           // player defeat!
@@ -324,6 +401,32 @@ window.onload = function() {
       }
     }
 
+    // check if avatar has a valid y-value
+    if (avatar.y >= 330) {
+      avatar.y = 311;
+    }
+
     handleInput();
+
+    // freeze everything in place
+    if (score == 99999 && !victoryState) {
+      victoryState = true;
+
+      // freeze enemies
+      for (var i = 0; i < enemies.length; i++) {
+        let enemy = enemies[i];
+        enemy.body.gravity.y = 0;
+        enemy.body.velocity.x = 0;
+        enemy.body.velocity.y = 0;
+      }
+
+      // stop the enemy timer
+      enemyTimer.stop();
+
+      // restart the game
+      bgmGame.stop();
+      sfxVictory.play();
+      restart();
+    }
   }
 };
