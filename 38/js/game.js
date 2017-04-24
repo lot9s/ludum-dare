@@ -1,3 +1,4 @@
+/* --- global variables --- */
 let game = null;
 
 let cursors = null;
@@ -6,6 +7,12 @@ let cursors = null;
 // ui
 let barEnergy = null;
 let energy = 1000;
+
+let scoreTenThousandsText = null;
+let scoreThousandsText = null;
+let scoreHundredsText = null;
+let scoreTensText = null;
+let scoreDigitText = null;
 let score = 0;
 
 
@@ -25,8 +32,28 @@ let avatar = null;
 let bootsOnGround = false;
 let wadCount = 0;
 
+// sound
+let sfxKill = null;
 
 
+
+/* --- functions ---  */
+function createText() {
+  textStyle = {
+    font: "65px Monospace",
+    fill: "#ffffff"
+  };
+
+  scoreTenThousandsText = game.add.text(30, 30, "0", textStyle);
+  scoreThousandsText = game.add.text(30, 90, "0", textStyle);
+  scoreHundredsText = game.add.text(30, 150, "0", textStyle);
+  scoreTensText = game.add.text(30, 210, "0", textStyle);
+  scoreDigitText = game.add.text(30, 270, "0", textStyle);
+}
+
+
+
+/* --- main ---  */
 window.onload = function() {
   game = new Phaser.Game(640, 480, Phaser.AUTO, 'game', {
     preload: preload, 
@@ -49,6 +76,8 @@ window.onload = function() {
 
     let keyboard = game.add.sprite(160, 367, 'keyboard');
     keyboard.scale.setTo(0.5, 0.5);
+
+    createText();
 
     avatar = game.add.sprite(312, 250, 'avatar');
 
@@ -88,6 +117,9 @@ window.onload = function() {
     enemyTimer = game.time.create(false);
     enemyTimer.loop(1000, spawnEnemy);
     enemyTimer.start();
+
+    // sound
+    sfxKill = game.add.audio('kill');
   }
 
   function createControls() {
@@ -156,6 +188,7 @@ window.onload = function() {
   }
 
   function preload () {
+    // --- sprites ---
     // ui
     game.load.image('background', 'res/img/background.png');
     game.load.image('keyboard', 'res/img/keyboard.png');
@@ -173,11 +206,21 @@ window.onload = function() {
     // avatar
     game.load.image('avatar', 'res/img/avatar.png');
     game.load.image('avatar-magnet', 'res/img/avatar-magnet.png');
+
+    // --- audio ---
+    game.load.audio('kill', 'res/sfx/kill.wav');
   }
 
   function render() {
     // --- for debugging purposes only ---
     //game.debug.body(avatar);
+
+    // render score
+    scoreTenThousandsText.setText( parseInt((score / 10000) % 10) );
+    scoreThousandsText.setText( parseInt((score / 1000) % 10) );
+    scoreHundredsText.setText( parseInt((score / 100) % 10) );
+    scoreTensText.setText( parseInt((score / 10) % 10) );
+    scoreDigitText.setText( parseInt(score % 10) );
 
     // render energy bar
     barEnergy.scale.setTo(1, energy / 1000.0);
@@ -189,8 +232,8 @@ window.onload = function() {
   }
 
   function spawnEnemy() {
-    let enemy = game.add.sprite(game.rnd.between(111, 529), 
-                                game.rnd.between( 51, 329), 
+    let enemy = game.add.sprite(game.rnd.between(111, 521), 
+                                game.rnd.between( 51, 321), 
                                 'enemy');
 
 
@@ -221,6 +264,7 @@ window.onload = function() {
           enemies.splice(i, 1);
 
           score = score + 1;
+          sfxKill.play();
         } else {
           // player defeat!
           //avatar.kill();
