@@ -33,6 +33,8 @@ let bootsOnGround = false;
 let wadCount = 0;
 
 // sound
+let bgmGame = null;
+
 let sfxDeath = null;
 let sfxFastMove = null;
 let sfxKill = null;
@@ -168,11 +170,26 @@ window.onload = function() {
     sfxDeath = game.add.audio('death');
     sfxFastMove = game.add.audio('fast-move');
     sfxKill = game.add.audio('kill');
+
+    bgmGame = game.add.audio('bgm');
+    bgmGame.loop = true;
+    bgmGame.play();
   }
 
   function handleInput() {
     let arrowKeysDown = cursors.left.isDown || cursors.right.isDown;
     let wadKeysDown = cursors.w.isDown || cursors.a.isDown || cursors.d.isDown
+
+    // --- movement ---
+    // left movement
+    if (bootsOnGround && cursors.left.isDown) {
+      avatar.body.velocity.x = -100;
+    } 
+
+    // right movement
+    if (bootsOnGround && cursors.right.isDown) {
+      avatar.body.velocity.x = 100;
+    }
 
     // --- fast movement ---
     if (energy > 0) {
@@ -193,17 +210,6 @@ window.onload = function() {
         avatar.body.velocity.x = 1000;
         energy = Math.max(0, energy - 5);
       }
-    }
-
-    // --- movement ---
-    // left movement
-    if (bootsOnGround && cursors.left.isDown) {
-      avatar.body.velocity.x = -100;
-    } 
-
-    // right movement
-    if (bootsOnGround && cursors.right.isDown) {
-      avatar.body.velocity.x = 100;
     }
 
     // --- rest ---
@@ -235,6 +241,7 @@ window.onload = function() {
     game.load.image('avatar-magnet', 'res/img/avatar-magnet.png');
 
     // --- audio ---
+    game.load.audio('bgm', 'res/bgm/172561__djgriffin__video-game-7.wav');
     game.load.audio('death', 'res/sfx/death.wav');
     game.load.audio('fast-move', 'res/sfx/fast-move.wav');
     game.load.audio('kill', 'res/sfx/kill.wav');
@@ -262,7 +269,13 @@ window.onload = function() {
 
   function restart() {
     restartTimer = game.time.create(false);
-    restartTimer.add(5000, function() { game.state.restart(); });
+
+    restartTimer.add(5000, function() {
+      score = 0;
+      energy = 1000;
+      game.state.restart();
+    });
+
     restartTimer.start();
   }
 
@@ -303,6 +316,7 @@ window.onload = function() {
         } else {
           // player defeat!
           avatar.kill();
+          bgmGame.stop();
           sfxDeath.play();
 
           restart();
