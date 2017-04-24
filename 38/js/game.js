@@ -33,11 +33,66 @@ let bootsOnGround = false;
 let wadCount = 0;
 
 // sound
+let sfxDeath = null;
+let sfxFastMove = null;
 let sfxKill = null;
 
 
 
 /* --- functions ---  */
+function createAvatar() {
+  avatar = game.add.sprite(312, 250, 'avatar');
+  game.physics.arcade.enable([avatar]);
+  avatar.body.setSize(16, 18);
+  avatar.body.collideWorldBounds = true;
+  avatar.body.bounce.y = 0.1;
+  avatar.body.gravity.y = 100;
+}
+
+function createControls() {
+  cursors = game.input.keyboard.createCursorKeys();
+
+  cursors.w = game.input.keyboard.addKey(Phaser.Keyboard.W);
+  cursors.w.onDown.add(wadOnDown);
+  cursors.w.onUp.add(wadOnUp);
+
+  cursors.a = game.input.keyboard.addKey(Phaser.Keyboard.A);
+  cursors.a.onDown.add(wadOnDown);
+  cursors.a.onUp.add(wadOnUp);
+
+  cursors.d = game.input.keyboard.addKey(Phaser.Keyboard.D);
+  cursors.d.onDown.add(wadOnDown);
+  cursors.d.onUp.add(wadOnUp);
+}
+
+function createStage() {
+  // add sprites
+  game.add.sprite(0, 0, 'background');
+
+  // --- ground
+  ground = game.add.sprite(100, 330, 'ground');
+  game.physics.arcade.enable(ground);
+  ground.body.immovable = true;
+
+  // --- walls
+  walls = game.add.group();
+  walls.enableBody = true;
+
+  // roof
+  let roof = walls.create(110, 20, 'roof');
+  roof.scale.setTo(1.2, 1.0);
+  roof.x = 70;
+  roof.body.immovable = true;
+
+  // wall, left
+  let wall_l = walls.create(80, 50, 'wall');
+  wall_l.body.immovable = true;
+
+  // wall, right
+  let wall_r = walls.create(532, 50, 'wall');
+  wall_r.body.immovable = true;
+}
+
 function createText() {
   textStyle = {
     font: "65px Monospace",
@@ -49,6 +104,36 @@ function createText() {
   scoreHundredsText = game.add.text(30, 150, "0", textStyle);
   scoreTensText = game.add.text(30, 210, "0", textStyle);
   scoreDigitText = game.add.text(30, 270, "0", textStyle);
+}
+
+function createUI() {
+  // add score label
+  createText();
+
+  // add energy bar
+  game.add.sprite(583, 48, 'bar-container');
+  barEnergy = game.add.sprite(585, 50, 'bar-energy');
+
+  // add keyboard controls image for player
+  let keyboard = game.add.sprite(160, 367, 'keyboard');
+  keyboard.scale.setTo(0.5, 0.5);
+}
+
+function wadOnDown() {
+  if (wadCount == 0) {
+    avatar.loadTexture('avatar-magnet');
+    sfxFastMove.play();
+  }
+
+  wadCount = wadCount + 1;
+}
+
+function wadOnUp() {
+  wadCount = wadCount - 1;
+
+  if (wadCount == 0) {
+    avatar.loadTexture('avatar');
+  }
 }
 
 
@@ -66,81 +151,23 @@ window.onload = function() {
     // --- for debugging purposes only ---
     game.stage.backgroundColor = "#00ffff";
 
+    // --- add physics ---
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    createStage();
+    createAvatar();
+    createUI();
     createControls();
 
-    // add sprites
-    game.add.sprite(0, 0, 'background');
-
-    game.add.sprite(583, 48, 'bar-container');
-    barEnergy = game.add.sprite(585, 50, 'bar-energy');
-
-    let keyboard = game.add.sprite(160, 367, 'keyboard');
-    keyboard.scale.setTo(0.5, 0.5);
-
-    createText();
-
-    avatar = game.add.sprite(312, 250, 'avatar');
-
-    ground = game.add.sprite(100, 330, 'ground');
-
-    // add groups
-    walls = game.add.group();
-
-    // add physics
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    game.physics.arcade.enable([ground, avatar]);
-
-    // adjust settings for ground
-    ground.body.immovable = true;
-
-    // adjust settings for walls
-    walls.enableBody = true;
-
-    let roof = walls.create(110, 20, 'roof');
-    roof.scale.setTo(1.2, 1.0);
-    roof.x = 70;
-    roof.body.immovable = true;
-
-    let wall_l = walls.create(80, 50, 'wall');
-    wall_l.body.immovable = true;
-
-    let wall_r = walls.create(532, 50, 'wall');
-    wall_r.body.immovable = true;
-
-    // adjust settings for avatar
-    avatar.body.setSize(16, 18);
-    avatar.body.collideWorldBounds = true;
-    avatar.body.bounce.y = 0.1;
-    avatar.body.gravity.y = 100;
-
-    // adjust settings for enemies
+    // create enemies
     enemyTimer = game.time.create(false);
     enemyTimer.loop(1000, spawnEnemy);
     enemyTimer.start();
 
-    // sound
+    // add sounds
+    sfxDeath = game.add.audio('death');
+    sfxFastMove = game.add.audio('fast-move');
     sfxKill = game.add.audio('kill');
-  }
-
-  function createControls() {
-    cursors = game.input.keyboard.createCursorKeys();
-
-    cursors.w = game.input.keyboard.addKey(Phaser.Keyboard.W);
-    cursors.w.onDown.add(wadOnDown);
-    cursors.w.onUp.add(wadOnUp);
-
-    cursors.a = game.input.keyboard.addKey(Phaser.Keyboard.A);
-    cursors.a.onDown.add(wadOnDown);
-    cursors.a.onUp.add(wadOnUp);
-
-    cursors.d = game.input.keyboard.addKey(Phaser.Keyboard.D);
-    cursors.d.onDown.add(wadOnDown);
-    cursors.d.onUp.add(wadOnUp);
-  }
-
-  function createStage() {
-    let keyboard = game.add.sprite(160, 367, 'keyboard');
-    keyboard.scale.setTo(0.5, 0.5);
   }
 
   function handleInput() {
@@ -208,6 +235,8 @@ window.onload = function() {
     game.load.image('avatar-magnet', 'res/img/avatar-magnet.png');
 
     // --- audio ---
+    game.load.audio('death', 'res/sfx/death.wav');
+    game.load.audio('fast-move', 'res/sfx/fast-move.wav');
     game.load.audio('kill', 'res/sfx/kill.wav');
   }
 
@@ -229,6 +258,12 @@ window.onload = function() {
     if (energy == 0) {
       avatar.loadTexture('avatar');
     }
+  }
+
+  function restart() {
+    restartTimer = game.time.create(false);
+    restartTimer.add(5000, function() { game.state.restart(); });
+    restartTimer.start();
   }
 
   function spawnEnemy() {
@@ -267,27 +302,14 @@ window.onload = function() {
           sfxKill.play();
         } else {
           // player defeat!
-          //avatar.kill();
+          avatar.kill();
+          sfxDeath.play();
+
+          restart();
         }
       }
     }
 
     handleInput();
-  }
-
-  function wadOnDown() {
-    if (wadCount == 0) {
-      avatar.loadTexture('avatar-magnet');
-    }
-
-    wadCount = wadCount + 1;
-  }
-
-  function wadOnUp() {
-    wadCount = wadCount - 1;
-
-    if (wadCount == 0) {
-      avatar.loadTexture('avatar');
-    }
   }
 };
