@@ -174,6 +174,17 @@ window.onload = function() {
     let arrowKeysDown = cursors.left.isDown || cursors.right.isDown;
     let wadKeysDown = cursors.w.isDown || cursors.a.isDown || cursors.d.isDown
 
+    // --- movement ---
+    // left movement
+    if (bootsOnGround && cursors.left.isDown) {
+      avatar.body.velocity.x = -100;
+    } 
+
+    // right movement
+    if (bootsOnGround && cursors.right.isDown) {
+      avatar.body.velocity.x = 100;
+    }
+
     // --- fast movement ---
     if (energy > 0) {
       // magnetism, up
@@ -193,17 +204,6 @@ window.onload = function() {
         avatar.body.velocity.x = 1000;
         energy = Math.max(0, energy - 5);
       }
-    }
-
-    // --- movement ---
-    // left movement
-    if (bootsOnGround && cursors.left.isDown) {
-      avatar.body.velocity.x = -100;
-    } 
-
-    // right movement
-    if (bootsOnGround && cursors.right.isDown) {
-      avatar.body.velocity.x = 100;
     }
 
     // --- rest ---
@@ -262,7 +262,13 @@ window.onload = function() {
 
   function restart() {
     restartTimer = game.time.create(false);
-    restartTimer.add(5000, function() { game.state.restart(); });
+
+    restartTimer.add(5000, function() {
+      score = 0;
+      energy = 1000;
+      game.state.restart();
+    });
+
     restartTimer.start();
   }
 
