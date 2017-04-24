@@ -1,3 +1,4 @@
+/* --- global variables --- */
 let game = null;
 
 let cursors = null;
@@ -6,6 +7,12 @@ let cursors = null;
 // ui
 let barEnergy = null;
 let energy = 1000;
+
+let scoreTenThousandsText = null;
+let scoreThousandsText = null;
+let scoreHundredsText = null;
+let scoreTensText = null;
+let scoreDigitText = null;
 let score = 0;
 
 
@@ -25,8 +32,113 @@ let avatar = null;
 let bootsOnGround = false;
 let wadCount = 0;
 
+// sound
+let sfxDeath = null;
+let sfxFastMove = null;
+let sfxKill = null;
 
 
+
+/* --- functions ---  */
+function createAvatar() {
+  avatar = game.add.sprite(312, 250, 'avatar');
+  game.physics.arcade.enable([avatar]);
+  avatar.body.setSize(16, 18);
+  avatar.body.collideWorldBounds = true;
+  avatar.body.bounce.y = 0.1;
+  avatar.body.gravity.y = 100;
+}
+
+function createControls() {
+  cursors = game.input.keyboard.createCursorKeys();
+
+  cursors.w = game.input.keyboard.addKey(Phaser.Keyboard.W);
+  cursors.w.onDown.add(wadOnDown);
+  cursors.w.onUp.add(wadOnUp);
+
+  cursors.a = game.input.keyboard.addKey(Phaser.Keyboard.A);
+  cursors.a.onDown.add(wadOnDown);
+  cursors.a.onUp.add(wadOnUp);
+
+  cursors.d = game.input.keyboard.addKey(Phaser.Keyboard.D);
+  cursors.d.onDown.add(wadOnDown);
+  cursors.d.onUp.add(wadOnUp);
+}
+
+function createStage() {
+  // add sprites
+  game.add.sprite(0, 0, 'background');
+
+  // --- ground
+  ground = game.add.sprite(100, 330, 'ground');
+  game.physics.arcade.enable(ground);
+  ground.body.immovable = true;
+
+  // --- walls
+  walls = game.add.group();
+  walls.enableBody = true;
+
+  // roof
+  let roof = walls.create(110, 20, 'roof');
+  roof.scale.setTo(1.2, 1.0);
+  roof.x = 70;
+  roof.body.immovable = true;
+
+  // wall, left
+  let wall_l = walls.create(80, 50, 'wall');
+  wall_l.body.immovable = true;
+
+  // wall, right
+  let wall_r = walls.create(532, 50, 'wall');
+  wall_r.body.immovable = true;
+}
+
+function createText() {
+  textStyle = {
+    font: "65px Monospace",
+    fill: "#ffffff"
+  };
+
+  scoreTenThousandsText = game.add.text(30, 30, "0", textStyle);
+  scoreThousandsText = game.add.text(30, 90, "0", textStyle);
+  scoreHundredsText = game.add.text(30, 150, "0", textStyle);
+  scoreTensText = game.add.text(30, 210, "0", textStyle);
+  scoreDigitText = game.add.text(30, 270, "0", textStyle);
+}
+
+function createUI() {
+  // add score label
+  createText();
+
+  // add energy bar
+  game.add.sprite(583, 48, 'bar-container');
+  barEnergy = game.add.sprite(585, 50, 'bar-energy');
+
+  // add keyboard controls image for player
+  let keyboard = game.add.sprite(160, 367, 'keyboard');
+  keyboard.scale.setTo(0.5, 0.5);
+}
+
+function wadOnDown() {
+  if (wadCount == 0) {
+    avatar.loadTexture('avatar-magnet');
+    sfxFastMove.play();
+  }
+
+  wadCount = wadCount + 1;
+}
+
+function wadOnUp() {
+  wadCount = wadCount - 1;
+
+  if (wadCount == 0) {
+    avatar.loadTexture('avatar');
+  }
+}
+
+
+
+/* --- main ---  */
 window.onload = function() {
   game = new Phaser.Game(640, 480, Phaser.AUTO, 'game', {
     preload: preload, 
@@ -39,76 +151,23 @@ window.onload = function() {
     // --- for debugging purposes only ---
     game.stage.backgroundColor = "#00ffff";
 
+    // --- add physics ---
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    createStage();
+    createAvatar();
+    createUI();
     createControls();
 
-    // add sprites
-    game.add.sprite(0, 0, 'background');
-
-    game.add.sprite(583, 48, 'bar-container');
-    barEnergy = game.add.sprite(585, 50, 'bar-energy');
-
-    let keyboard = game.add.sprite(160, 367, 'keyboard');
-    keyboard.scale.setTo(0.5, 0.5);
-
-    avatar = game.add.sprite(312, 250, 'avatar');
-
-    ground = game.add.sprite(100, 330, 'ground');
-
-    // add groups
-    walls = game.add.group();
-
-    // add physics
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    game.physics.arcade.enable([ground, avatar]);
-
-    // adjust settings for ground
-    ground.body.immovable = true;
-
-    // adjust settings for walls
-    walls.enableBody = true;
-
-    let roof = walls.create(110, 20, 'roof');
-    roof.scale.setTo(1.2, 1.0);
-    roof.x = 70;
-    roof.body.immovable = true;
-
-    let wall_l = walls.create(80, 50, 'wall');
-    wall_l.body.immovable = true;
-
-    let wall_r = walls.create(532, 50, 'wall');
-    wall_r.body.immovable = true;
-
-    // adjust settings for avatar
-    avatar.body.setSize(16, 18);
-    avatar.body.collideWorldBounds = true;
-    avatar.body.bounce.y = 0.1;
-    avatar.body.gravity.y = 100;
-
-    // adjust settings for enemies
+    // create enemies
     enemyTimer = game.time.create(false);
     enemyTimer.loop(1000, spawnEnemy);
     enemyTimer.start();
-  }
 
-  function createControls() {
-    cursors = game.input.keyboard.createCursorKeys();
-
-    cursors.w = game.input.keyboard.addKey(Phaser.Keyboard.W);
-    cursors.w.onDown.add(wadOnDown);
-    cursors.w.onUp.add(wadOnUp);
-
-    cursors.a = game.input.keyboard.addKey(Phaser.Keyboard.A);
-    cursors.a.onDown.add(wadOnDown);
-    cursors.a.onUp.add(wadOnUp);
-
-    cursors.d = game.input.keyboard.addKey(Phaser.Keyboard.D);
-    cursors.d.onDown.add(wadOnDown);
-    cursors.d.onUp.add(wadOnUp);
-  }
-
-  function createStage() {
-    let keyboard = game.add.sprite(160, 367, 'keyboard');
-    keyboard.scale.setTo(0.5, 0.5);
+    // add sounds
+    sfxDeath = game.add.audio('death');
+    sfxFastMove = game.add.audio('fast-move');
+    sfxKill = game.add.audio('kill');
   }
 
   function handleInput() {
@@ -156,6 +215,7 @@ window.onload = function() {
   }
 
   function preload () {
+    // --- sprites ---
     // ui
     game.load.image('background', 'res/img/background.png');
     game.load.image('keyboard', 'res/img/keyboard.png');
@@ -173,11 +233,23 @@ window.onload = function() {
     // avatar
     game.load.image('avatar', 'res/img/avatar.png');
     game.load.image('avatar-magnet', 'res/img/avatar-magnet.png');
+
+    // --- audio ---
+    game.load.audio('death', 'res/sfx/death.wav');
+    game.load.audio('fast-move', 'res/sfx/fast-move.wav');
+    game.load.audio('kill', 'res/sfx/kill.wav');
   }
 
   function render() {
     // --- for debugging purposes only ---
     //game.debug.body(avatar);
+
+    // render score
+    scoreTenThousandsText.setText( parseInt((score / 10000) % 10) );
+    scoreThousandsText.setText( parseInt((score / 1000) % 10) );
+    scoreHundredsText.setText( parseInt((score / 100) % 10) );
+    scoreTensText.setText( parseInt((score / 10) % 10) );
+    scoreDigitText.setText( parseInt(score % 10) );
 
     // render energy bar
     barEnergy.scale.setTo(1, energy / 1000.0);
@@ -188,9 +260,15 @@ window.onload = function() {
     }
   }
 
+  function restart() {
+    restartTimer = game.time.create(false);
+    restartTimer.add(5000, function() { game.state.restart(); });
+    restartTimer.start();
+  }
+
   function spawnEnemy() {
-    let enemy = game.add.sprite(game.rnd.between(111, 529), 
-                                game.rnd.between( 51, 329), 
+    let enemy = game.add.sprite(game.rnd.between(111, 521), 
+                                game.rnd.between( 51, 321), 
                                 'enemy');
 
 
@@ -221,29 +299,17 @@ window.onload = function() {
           enemies.splice(i, 1);
 
           score = score + 1;
+          sfxKill.play();
         } else {
           // player defeat!
-          //avatar.kill();
+          avatar.kill();
+          sfxDeath.play();
+
+          restart();
         }
       }
     }
 
     handleInput();
-  }
-
-  function wadOnDown() {
-    if (wadCount == 0) {
-      avatar.loadTexture('avatar-magnet');
-    }
-
-    wadCount = wadCount + 1;
-  }
-
-  function wadOnUp() {
-    wadCount = wadCount - 1;
-
-    if (wadCount == 0) {
-      avatar.loadTexture('avatar');
-    }
   }
 };
