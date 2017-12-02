@@ -2,6 +2,8 @@
 let avatar = null;
 let slash = null;
 
+let monster = null;
+
 let map = null;
 
 
@@ -20,12 +22,13 @@ class Avatar {
   constructor() {
     this.bootsOnGround = false;
 
-    /* sprite */
-    this.sprite = game.add.sprite(21, 321, 'characters', 23);
+    /* sprites */
+    //this.sprite = game.add.sprite(21, 321, 'characters', 23);
+    this.sprite = game.add.sprite(21, 321, 'master-sheet', 110);
 
     /* animations */
-    this.sprite.animations.add('idle', [23]);
-    this.sprite.animations.add('walk', [23,24,25,26]);
+    this.sprite.animations.add('idle', [110]);
+    this.sprite.animations.add('walk', [110,111]);
 
     /* physics */
     game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
@@ -36,8 +39,32 @@ class Avatar {
   }
 }
 
+class Monster {
+  constructor() {
+    this.bootsOnGround = false;
+
+    /* sprite */
+    this.sprite = game.add.sprite(201, 321, 'master-sheet', 171);
+
+    /* physics */
+    game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
+    this.sprite.body.collideWorldBounds = true;
+  }
+
+  update() {
+    this.sprite.body.velocity.x = -5;
+
+    if (this.bootsOnGround) {
+      this.sprite.body.velocity.y = -50;
+    }
+  }
+}
+
 class Slash {
   constructor() {
+    this.level = 0;
+
+    /* sprite */
     this.sprite = game.add.sprite(-32, -32, 'slash', 0);
 
     /* animations */
@@ -50,12 +77,21 @@ class Slash {
     game.spaceKey.onDown.add(this.onSpace, this);
   }
 
-  onSpace(test) {
+  onSpace() {
     if (avatar) {
+      if (this.level > 0) {
+        game.sfxScream2.play();
+      }
+
       this.sprite.x = avatar.sprite.x + (avatar.sprite.width / 2);
-      this.sprite.y = avatar.sprite.y;
-      this.sprite.body.velocity.x = 2000;
+      this.sprite.y = avatar.sprite.y - (avatar.sprite.width / 2);
+
+      if (this.level > 0) {
+        this.sprite.body.velocity.x = 2000;
+      }
+
       this.sprite.animations.play('attack', 30);
+
       this.sprite.animations.currentAnim.onComplete.add(function() {
         this.sprite.x = -32;
         this.sprite.y = -32;
@@ -67,6 +103,8 @@ class Slash {
 
 class Map {
   constructor(tag_tilemap, tag_tiles) {
+    this.clear = false;
+
     /* tilemap */
     this.tilemap = game.add.tilemap(tag_tilemap);
     this.tilemap.addTilesetImage('ld40-tiles', 'ld40-tiles', 21, 21, 2 ,2);
@@ -83,6 +121,18 @@ class Map {
 
     /* object layers */
     this.parseObjectLayer();
+
+    /* vfx */
+    this.emitter = game.add.emitter(0,0,10);
+    this.emitter.makeParticles('star');
+    this.emitter.setXSpeed(-50, 50);
+    this.emitter.setYSpeed(-50, -200);
+    this.emitter.setRotation();
+  }
+
+  emitStars() {
+    this.emitter.at(map.goal);
+    this.emitter.explode(2000, 10);
   }
 
   parseObjectLayer() {
@@ -160,12 +210,18 @@ function preload() {
   game.load.image('ld40-tiles', 'res/img/tiles.png');
   game.load.image('ld40-tiles-background', 'res/img/tiles-background.png');
 
-  /* character */
-  game.load.spritesheet('characters', 'res/img/characters.png', 31,32,73,0,1);
+  /* sprite sheets */
+  game.load.spritesheet('master-sheet', 'res/img/tiles.png', 21,21,900,2,2);
   game.load.spritesheet('slash', 'res/img/animation-slash.png', 32,32,4);
+
+  /* particles */
+  game.load.image('star', 'res/img/particle-star.png');
 
   /* audio */
   game.load.audio('bgm', 'res/bgm/bgm.mp3');
+  game.load.audio('scream1', 'res/sfx/scream1.ogg');
+  game.load.audio('scream2', 'res/sfx/scream2.wav');
+  game.load.audio('win', 'res/sfx/win.wav');
 }
 
 function create() {
@@ -184,6 +240,13 @@ function create() {
   avatar = new Avatar();
   slash = new Slash();
 
+  monster = new Monster();
+
+  /* sfx */
+  game.sfxScream1 = game.add.audio('scream1');
+  game.sfxScream2 = game.add.audio('scream2');
+  game.sfxWin = game.add.audio('win');
+
   /* bgm */
   bgmGame = game.add.audio('bgm');
   bgmGame.loop = true;
@@ -191,17 +254,30 @@ function create() {
 }
 
 function update() {
-  /* detect collisions */
+  /* detect collisions with ground */
   map.ground.forEach(function(item, index) {
     avatar.bootsOnGround = game.physics.arcade.collide(avatar.sprite, item);
+    monster.bootsOnGround = game.physics.arcade.collide(monster.sprite, item);
   });
+
+  /* detect collision with monsters */
+  game.physics.arcade.collide(avatar.sprite, monster.sprite);
 
   /* detect clear condition */
   let clear = game.physics.arcade.overlap(avatar.sprite, map.goal);
+  if (clear && !map.clear) {
+    game.sfxWin.play();
+    map.emitStars();
+    map.clear = true;
+  }
 
+  /* player update */
   handleInput();
+
+  /* non-player update */
+  monster.update();
 }
 
 function render() {
-  
+  //game.debug.body(avatar.sprite);
 }
