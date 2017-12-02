@@ -1,138 +1,177 @@
-/* --- main --- */
-window.onload = function() {
-  /* --- variables --- */
-  let avatar = null;
-  let slash = null;
-  let bootsOnGround = false;
-  
-  let mapObjects = null;
+/* --- variables --- */
+let avatar = null;
+let slash = null;
+
+let map = null;
 
 
-  /* --- game  --- */
-  game = new Phaser.Game(672, 378, Phaser.AUTO, null, {
-    preload: preload,
-    create: create,
-    update: update,
-    render: render
-  });
+/* --- game  --- */
+game = new Phaser.Game(672, 378, Phaser.AUTO, null, {
+  preload: preload,
+  create: create,
+  update: update,
+  render: render
+});
 
 
-  /* --- functions --- */
-  function preload() {
-    /* map */
-    game.load.tilemap('ld40-test-map', 'res/map/ld40-test-map.json', null,
-                      Phaser.Tilemap.TILED_JSON);
-    game.load.image('tiles', 'res/img/tiles.png');
+/* --- classes --- */
+class Avatar {
+  constructor() {
+    this.bootsOnGround = false;
 
-    /* character */
-    game.load.spritesheet('characters', 'res/img/characters.png', 32,32,73);
-    game.load.spritesheet('slash', 'res/img/animation-slash.png', 32,32,4);
+    /* sprite */
+    this.sprite = game.add.sprite(21, 321, 'characters', 23);
+
+    /* animations */
+    this.sprite.animations.add('idle', [23]);
+    this.sprite.animations.add('walk', [23,24,25,26]);
+
+    /* physics */
+    game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
+    this.sprite.body.collideWorldBounds = true;
+  }
+}
+
+class Slash {
+  constructor() {
+    this.sprite = game.add.sprite(-32, -32, 'slash', 0);
+
+    /* animations */
+    this.sprite.animations.add('attack', [0,1,2,3]);
+
+    /* physics */
+    game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
+    this.sprite.body.allowGravity = false;
+
+    game.spaceKey.onDown.add(this.onSpace, this);
   }
 
-  function create() {
-    /* physics declaration */
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    game.physics.arcade.gravity.y = 105;
-
-    /* map */
-    let map = game.add.tilemap('ld40-test-map');
-    map.addTilesetImage('ld40-tiles', 'tiles', 21, 21, 2, 2);
-    
-    let backLayer = map.createLayer('background');
-    let foreLayer = map.createLayer('foreground');
-    foreLayer.resizeWorld();
-
-    mapObjects = createObjectLayerSprites(map);
-
-    /* character */
-    avatar = game.add.sprite(21, 321, 'characters', 23);
-    avatar.animations.add('idle', [23]);
-    avatar.animations.add('walk', [23,24,25,26]);
-
-    slash = game.add.sprite(-32, -32, 'slash', 0);
-    slash.animations.add('attack', [0,1,2,3]);
-
-    /* physics application */
-    game.physics.enable([avatar, slash], Phaser.Physics.ARCADE);
-    avatar.body.collideWorldBounds = true;
-    slash.body.allowGravity = false;
-
-    game.physics.enable(mapObjects, Phaser.Physics.ARCADE);
-    mapObjects.forEach(function(item, index) {
-      item.body.collideWorldBounds = true;
-    });
-
-    /* cursors declaration */
-    cursors = game.input.keyboard.createCursorKeys();
-    game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).onDown.add(function(){
-      slash.x = avatar.x + (avatar.width / 2);
-      slash.y = avatar.y;
-      slash.body.velocity.x = 2000;
-      slash.animations.play('attack', 30);
-      slash.animations.currentAnim.onComplete.add(function() {
-        slash.x = -32;
-        slash.y = -32;
-        slash.body.velocity.x = 0;
-      });
-    });
+  onSpace(test) {
+    if (avatar) {
+      this.sprite.x = avatar.sprite.x + (avatar.sprite.width / 2);
+      this.sprite.y = avatar.sprite.y;
+      this.sprite.body.velocity.x = 2000;
+      this.sprite.animations.play('attack', 30);
+      this.sprite.animations.currentAnim.onComplete.add(function() {
+        this.sprite.x = -32;
+        this.sprite.y = -32;
+        this.sprite.body.velocity.x = 0;
+      }, this);
+    }
   }
-  
-  function createObjectLayerSprites(map) {
-    let mapObjects = [];
+}
+
+class Map {
+  constructor(tag_tilemap, tag_tiles) {
+    /* tilemap */
+    this.tilemap = game.add.tilemap(tag_tilemap);
+    this.tilemap.addTilesetImage(tag_tiles, tag_tiles, 21, 21, 2 ,2);
+
+    /* tile layers */
+    this.layers = {
+      'background': this.tilemap.createLayer('background'),
+      'foreground': this.tilemap.createLayer('foreground')
+    }
+
+    /* object layers */
+    this.parseObjectLayer();
+  }
+
+  parseObjectLayer() {
+    this.ground = [];
 
     /* parse each object layer */
-    for (layerKey in map.objects) {
-      let layer = map.objects[layerKey];
+    for (const layerKey in this.tilemap.objects) {
+      let layer = this.tilemap.objects[layerKey];
 
-      /* parse each object in the object layer */
+      let self = this;
       layer.forEach(function(item, index) {
+        /* generic object creation */
         let objectSprite = game.add.sprite(item.x, item.y);
         objectSprite.name = layerKey;
         objectSprite.width = item.width;
         objectSprite.height = item.height;
-        mapObjects.push(objectSprite);
+
+        /* ground objects */
+        if (layerKey == 'ground') {
+          game.physics.enable(objectSprite, Phaser.Physics.ARCADE);
+          objectSprite.body.collideWorldBounds = true;
+          objectSprite.body.allowGravity = false;
+
+          self.ground.push(objectSprite);
+        }
       });
     }
-
-    return mapObjects;
   }
-  
-  function update() {
-    /* detect collisions */
-    mapObjects.forEach(function(item, index) {
-      let collision = game.physics.arcade.collide(avatar, item);
-      bootsOnGround = collision && item.name == "ground";
-    });
+}
 
-    handleInput();
-  }
 
-  function handleInput() {
-    let arrowKeysDown = cursors.left.isDown || cursors.right.isDown;
+/* --- functions --- */
+function handleInput() {
+  let arrowKeysDown = game.cursorKeys.left.isDown ||
+                      game.cursorKeys.right.isDown;
 
-    if (bootsOnGround) {
-      if (cursors.left.isDown) {
-        avatar.body.velocity.x = -50;
-        avatar.animations.play('walk', 5);
-      }
+  if (avatar.bootsOnGround) {
+    if (game.cursorKeys.left.isDown) {
+      avatar.sprite.body.velocity.x = -50;
+      avatar.sprite.animations.play('walk', 5);
+    }
 
-      if (cursors.right.isDown) {
-        avatar.body.velocity.x = 50;
-        avatar.animations.play('walk', 5);
-      }
+    if (game.cursorKeys.right.isDown) {
+      avatar.sprite.body.velocity.x = 50;
+      avatar.sprite.animations.play('walk', 5);
+    }
 
-      if (cursors.up.isDown) {
-        avatar.body.velocity.y = -50;
-      }
+    if (game.cursorKeys.up.isDown) {
+      avatar.sprite.body.velocity.y = -50;
+    }
 
-      if (!arrowKeysDown) {
-        avatar.body.velocity.x = 0;
-        avatar.animations.play('idle');
-      }
+    if (!arrowKeysDown) {
+      avatar.sprite.body.velocity.x = 0;
+      avatar.sprite.animations.play('idle');
     }
   }
+}
+
+
+/* --- life cycle functions --- */
+function preload() {
+  /* map */
+  game.load.tilemap('ld40-test-map', 'res/map/ld40-test-map.json', null,
+                    Phaser.Tilemap.TILED_JSON);
+  game.load.image('ld40-tiles', 'res/img/tiles.png');
+
+  /* character */
+  game.load.spritesheet('characters', 'res/img/characters.png', 31,32,73,0,1);
+  game.load.spritesheet('slash', 'res/img/animation-slash.png', 32,32,4);
+}
+
+function create() {
+  /* cursors declaration */
+  game.cursorKeys = game.input.keyboard.createCursorKeys();
+  game.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+  /* physics declaration */
+  game.physics.startSystem(Phaser.Physics.ARCADE);
+  game.physics.arcade.gravity.y = 105;
+
+  /* map */
+  map = new Map('ld40-test-map', 'ld40-tiles');
+
+  /* sprites */
+  avatar = new Avatar();
+  slash = new Slash();
+}
+
+function update() {
+  /* detect collisions */
+  map.ground.forEach(function(item, index) {
+    avatar.bootsOnGround = game.physics.arcade.collide(avatar.sprite, item);
+  });
+
+  handleInput();
+}
+
+function render() {
   
-  function render() {
-    
-  }
-};
+}
