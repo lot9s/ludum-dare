@@ -69,7 +69,9 @@ class Map {
   constructor(tag_tilemap, tag_tiles) {
     /* tilemap */
     this.tilemap = game.add.tilemap(tag_tilemap);
-    this.tilemap.addTilesetImage(tag_tiles, tag_tiles, 21, 21, 2 ,2);
+    this.tilemap.addTilesetImage('ld40-tiles', 'ld40-tiles', 21, 21, 2 ,2);
+    this.tilemap.addTilesetImage('ld40-tiles-background',
+                                 'ld40-tiles-background', 21, 21);
 
     /* tile layers */
     this.layers = {
@@ -84,6 +86,7 @@ class Map {
   }
 
   parseObjectLayer() {
+    this.goal = null;
     this.ground = [];
 
     /* parse each object layer */
@@ -99,6 +102,13 @@ class Map {
         objectSprite.height = item.height;
 
         /* ground objects */
+        if (layerKey == 'goal') {
+          game.physics.enable(objectSprite, Phaser.Physics.ARCADE);
+          objectSprite.body.collideWorldBounds = true;
+          objectSprite.body.allowGravity = false;
+          self.goal = objectSprite;
+        }
+
         if (layerKey == 'ground') {
           game.physics.enable(objectSprite, Phaser.Physics.ARCADE);
           objectSprite.body.collideWorldBounds = true;
@@ -142,14 +152,20 @@ function handleInput() {
 
 /* --- life cycle functions --- */
 function preload() {
-  /* map */
+  /* tilemaps */
   game.load.tilemap('ld40-test-map', 'res/map/ld40-test-map.json', null,
                     Phaser.Tilemap.TILED_JSON);
+
+  /* tiles */
   game.load.image('ld40-tiles', 'res/img/tiles.png');
+  game.load.image('ld40-tiles-background', 'res/img/tiles-background.png');
 
   /* character */
   game.load.spritesheet('characters', 'res/img/characters.png', 31,32,73,0,1);
   game.load.spritesheet('slash', 'res/img/animation-slash.png', 32,32,4);
+
+  /* audio */
+  game.load.audio('bgm', 'res/bgm/bgm.mp3');
 }
 
 function create() {
@@ -162,11 +178,16 @@ function create() {
   game.physics.arcade.gravity.y = 105;
 
   /* map */
-  map = new Map('ld40-test-map', 'ld40-tiles');
+  map = new Map('ld40-test-map');
 
   /* sprites */
   avatar = new Avatar();
   slash = new Slash();
+
+  /* bgm */
+  bgmGame = game.add.audio('bgm');
+  bgmGame.loop = true;
+  bgmGame.play();
 }
 
 function update() {
@@ -174,6 +195,9 @@ function update() {
   map.ground.forEach(function(item, index) {
     avatar.bootsOnGround = game.physics.arcade.collide(avatar.sprite, item);
   });
+
+  /* detect clear condition */
+  let clear = game.physics.arcade.overlap(avatar.sprite, map.goal);
 
   handleInput();
 }
