@@ -6,7 +6,8 @@ let map = null;
 
 
 /* --- game  --- */
-game = new Phaser.Game(672, 378, Phaser.AUTO, null, {
+/*game = new Phaser.Game(672, 378, Phaser.AUTO, null, {*/
+game = new Phaser.Game(378, 378, Phaser.AUTO, null, {
   preload: preload,
   create: create,
   update: update,
@@ -29,6 +30,9 @@ class Avatar {
     /* physics */
     game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
     this.sprite.body.collideWorldBounds = true;
+
+    /* camera */
+    game.camera.follow(this.sprite, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
   }
 }
 
@@ -72,6 +76,8 @@ class Map {
       'background': this.tilemap.createLayer('background'),
       'foreground': this.tilemap.createLayer('foreground')
     }
+
+    this.layers.background.resizeWorld();
 
     /* object layers */
     this.parseObjectLayer();
