@@ -2,8 +2,6 @@
 let avatar = null;
 let slash = null;
 
-let monster = null;
-
 let map = null;
 
 
@@ -21,10 +19,11 @@ game = new Phaser.Game(378, 378, Phaser.AUTO, null, {
 class Avatar {
   constructor() {
     this.bootsOnGround = false;
+    this.kills = 0;
 
-    /* sprites */
-    //this.sprite = game.add.sprite(21, 321, 'characters', 23);
-    this.sprite = game.add.sprite(21, 321, 'master-sheet', 110);
+    /* sprite */
+    this.sprite = game.add.sprite(map.pcSpawn.x, map.pcSpawn.y, 
+                                  'master-sheet', 110);
 
     /* animations */
     this.sprite.animations.add('idle', [110]);
@@ -40,11 +39,11 @@ class Avatar {
 }
 
 class Monster {
-  constructor() {
+  constructor(spawnX, spawnY) {
     this.bootsOnGround = false;
 
     /* sprite */
-    this.sprite = game.add.sprite(201, 321, 'master-sheet', 171);
+    this.sprite = game.add.sprite(spawnX, spawnY, 'master-sheet', 171);
 
     /* physics */
     game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
@@ -52,7 +51,8 @@ class Monster {
   }
 
   update() {
-    this.sprite.body.velocity.x = -5;
+    let direction = (avatar.sprite.x - this.sprite.x) < 0 ? -1 : 1;
+    this.sprite.body.velocity.x = 10 * direction;
 
     if (this.bootsOnGround) {
       this.sprite.body.velocity.y = -50;
@@ -62,8 +62,6 @@ class Monster {
 
 class Slash {
   constructor() {
-    this.level = 0;
-
     /* sprite */
     this.sprite = game.add.sprite(-32, -32, 'slash', 0);
 
@@ -78,31 +76,35 @@ class Slash {
   }
 
   onSpace() {
-    if (avatar) {
-      if (this.level > 0) {
-        game.sfxScream2.play();
-      }
+    /* play sfx */
+    game.sfxSlash.play();
 
-      this.sprite.x = avatar.sprite.x + (avatar.sprite.width / 2);
-      this.sprite.y = avatar.sprite.y - (avatar.sprite.width / 2);
+    if (avatar.kills > 0) { game.sfxScream1.play(); }
+    if (avatar.kills > 1) { game.sfxScream2.play(); }
 
-      if (this.level > 0) {
-        this.sprite.body.velocity.x = 2000;
-      }
+    /* move slash sprite in front of player character */
+    this.sprite.x = avatar.sprite.x + (avatar.sprite.width / 2);
+    this.sprite.y = avatar.sprite.y - (avatar.sprite.width / 2);
 
-      this.sprite.animations.play('attack', 30);
-
-      this.sprite.animations.currentAnim.onComplete.add(function() {
-        this.sprite.x = -32;
-        this.sprite.y = -32;
-        this.sprite.body.velocity.x = 0;
-      }, this);
+    /* apply velocity to sprite */
+    if (avatar.kills > 1) {
+      this.sprite.body.velocity.x = 2000;
     }
+
+    /* play animation */
+    this.sprite.animations.play('attack', 30);
+
+    /* hide slash sprite at end of animation */
+    this.sprite.animations.currentAnim.onComplete.add(function() {
+      this.sprite.x = -32;
+      this.sprite.y = -32;
+      this.sprite.body.velocity.x = 0;
+    }, this);
   }
 }
 
 class Map {
-  constructor(tag_tilemap, tag_tiles) {
+  constructor(tag_tilemap) {
     this.clear = false;
 
     /* tilemap */
@@ -130,6 +132,18 @@ class Map {
     this.emitter.setRotation();
   }
 
+  cleanUp() {
+    this.clear = false;
+    this.goal = null;
+    this.pcSpawn = null;
+    this.ground = [];
+    this.monsters = [];
+
+    this.layers['background'].destroy();
+    this.layers['foreground'].destroy();
+    this.layers = {};
+  }
+
   emitStars() {
     this.emitter.at(map.goal);
     this.emitter.explode(2000, 10);
@@ -137,7 +151,11 @@ class Map {
 
   parseObjectLayer() {
     this.goal = null;
+
+    this.pcSpawn = null;
+
     this.ground = [];
+    this.monsters = [];
 
     /* parse each object layer */
     for (const layerKey in this.tilemap.objects) {
@@ -151,7 +169,7 @@ class Map {
         objectSprite.width = item.width;
         objectSprite.height = item.height;
 
-        /* ground objects */
+        /* goal object */
         if (layerKey == 'goal') {
           game.physics.enable(objectSprite, Phaser.Physics.ARCADE);
           objectSprite.body.collideWorldBounds = true;
@@ -159,6 +177,17 @@ class Map {
           self.goal = objectSprite;
         }
 
+        /* pc spawn point */
+        if (layerKey == 'pc-spawn') {
+          self.pcSpawn = objectSprite;
+        }
+
+        /* npc spawn points */
+        if (layerKey == 'npc-spawn') {
+          self.monsters.push(new Monster(item.x, item.y));
+        }
+
+        /* ground objects */
         if (layerKey == 'ground') {
           game.physics.enable(objectSprite, Phaser.Physics.ARCADE);
           objectSprite.body.collideWorldBounds = true;
@@ -173,23 +202,83 @@ class Map {
 
 
 /* --- functions --- */
+function handleCollisionsGoal() {
+  let clear = game.physics.arcade.overlap(avatar.sprite, map.goal);
+
+  /* start next level */
+  if (clear && !map.clear) {
+    /* sfx */
+    game.sfxWin.play();
+
+    /* vfx */
+    map.emitStars();
+
+    /* set flag */
+    map.clear = true;
+
+    startNextLevel();
+  }
+}
+
+function handleCollisionsGround() {
+  /* reset flags */
+  avatar.bootsOnGround = false;
+  map.monsters.forEach(function(monster, indexM) {
+    monster.bootsOnGround = false;
+  });
+
+  /* do computation */
+  map.ground.forEach(function(groundObj, indexG) {
+    avatar.bootsOnGround = avatar.bootsOnGround ||
+                           game.physics.arcade.collide(avatar.sprite,groundObj);
+
+    /* monsters */
+    map.monsters.forEach(function(monster, indexM) {
+      monster.bootsOnGround = monster.bootsOnGround ||
+                              game.physics.arcade.collide(monster.sprite,
+                                                          groundObj);
+    });
+  });
+}
+
+function handleCollisionsMonsters() {
+  map.monsters.forEach(function(monster, indexM) {
+    game.physics.arcade.collide(avatar.sprite, monster.sprite);
+
+    /* kill detection */
+    let monsterKill = game.physics.arcade.overlap(slash.sprite, monster.sprite);
+    if (monsterKill) {
+      monster.sprite.kill();
+      avatar.kills += 1;
+    }
+  });
+}
+
+function handleCollisionsWorld() {
+  if (avatar.sprite.body.blocked.down) {
+    // TODO: write death logic
+    restartLevel();
+  }
+}
+
 function handleInput() {
   let arrowKeysDown = game.cursorKeys.left.isDown ||
                       game.cursorKeys.right.isDown;
 
   if (avatar.bootsOnGround) {
     if (game.cursorKeys.left.isDown) {
-      avatar.sprite.body.velocity.x = -50;
+      avatar.sprite.body.velocity.x = -50 + (-5 * avatar.kills);
       avatar.sprite.animations.play('walk', 5);
     }
 
     if (game.cursorKeys.right.isDown) {
-      avatar.sprite.body.velocity.x = 50;
+      avatar.sprite.body.velocity.x = 50 + (5 * avatar.kills);
       avatar.sprite.animations.play('walk', 5);
     }
 
     if (game.cursorKeys.up.isDown) {
-      avatar.sprite.body.velocity.y = -50;
+      avatar.sprite.body.velocity.y = -50 + (-5 * avatar.kills);
+      game.sfxJump.play();
     }
 
     if (!arrowKeysDown) {
@@ -199,11 +288,62 @@ function handleInput() {
   }
 }
 
+function restartLevel() {
+  let timer = game.time.create(false);
+
+  /* delay the creation of the next level by 3 sec. */
+  timer.add(3000, function() {
+    map.cleanUp();
+
+    if (game.level < game.levelProgression.length) {
+      /* display new map */
+      map = new Map(game.levelProgression[game.level]);
+
+      /* re-position player character */
+      avatar.sprite.bringToTop();
+      avatar.sprite.x = map.pcSpawn.x;
+      avatar.sprite.y = map.pcSpawn.y;
+    
+      /* re-position slash */
+      slash.sprite.bringToTop();
+    }
+  });
+
+  timer.start();
+}
+
+function startNextLevel() {
+  let timer = game.time.create(false);
+
+  /* delay the creation of the next level by 3 sec. */
+  timer.add(3000, function() {
+    map.cleanUp();
+    game.level += 1;
+
+    if (game.level < game.levelProgression.length) {
+      /* display new map */
+      map = new Map(game.levelProgression[game.level]);
+
+      /* re-position player character */
+      avatar.sprite.bringToTop();
+      avatar.sprite.x = map.pcSpawn.x;
+      avatar.sprite.y = map.pcSpawn.y;
+    
+      /* re-position slash */
+      slash.sprite.bringToTop();
+    }
+  });
+
+  timer.start();
+}
+
 
 /* --- life cycle functions --- */
 function preload() {
   /* tilemaps */
   game.load.tilemap('ld40-test-map', 'res/map/ld40-test-map.json', null,
+                    Phaser.Tilemap.TILED_JSON);
+  game.load.tilemap('level1', 'res/map/level1.json', null,
                     Phaser.Tilemap.TILED_JSON);
 
   /* tiles */
@@ -219,12 +359,17 @@ function preload() {
 
   /* audio */
   game.load.audio('bgm', 'res/bgm/bgm.mp3');
+  game.load.audio('jump', 'res/sfx/jump.mp3');
   game.load.audio('scream1', 'res/sfx/scream1.ogg');
   game.load.audio('scream2', 'res/sfx/scream2.wav');
+  game.load.audio('slash', 'res/sfx/slash.wav');
   game.load.audio('win', 'res/sfx/win.wav');
 }
 
 function create() {
+  game.level = 0;
+  game.levelProgression = ['ld40-test-map', 'level1'];
+
   /* cursors declaration */
   game.cursorKeys = game.input.keyboard.createCursorKeys();
   game.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -240,11 +385,11 @@ function create() {
   avatar = new Avatar();
   slash = new Slash();
 
-  monster = new Monster();
-
   /* sfx */
+  game.sfxJump = game.add.audio('jump');
   game.sfxScream1 = game.add.audio('scream1');
   game.sfxScream2 = game.add.audio('scream2');
+  game.sfxSlash = game.add.audio('slash');
   game.sfxWin = game.add.audio('win');
 
   /* bgm */
@@ -254,28 +399,20 @@ function create() {
 }
 
 function update() {
-  /* detect collisions with ground */
-  map.ground.forEach(function(item, index) {
-    avatar.bootsOnGround = game.physics.arcade.collide(avatar.sprite, item);
-    monster.bootsOnGround = game.physics.arcade.collide(monster.sprite, item);
-  });
+  handleCollisionsWorld();
 
-  /* detect collision with monsters */
-  game.physics.arcade.collide(avatar.sprite, monster.sprite);
-
-  /* detect clear condition */
-  let clear = game.physics.arcade.overlap(avatar.sprite, map.goal);
-  if (clear && !map.clear) {
-    game.sfxWin.play();
-    map.emitStars();
-    map.clear = true;
-  }
+  /* collisions */
+  handleCollisionsGround();
+  handleCollisionsMonsters();
+  handleCollisionsGoal();
 
   /* player update */
   handleInput();
 
   /* non-player update */
-  monster.update();
+  map.monsters.forEach(function(monster, indexM) {
+    monster.update();
+  });
 }
 
 function render() {

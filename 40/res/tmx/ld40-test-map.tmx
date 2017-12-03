@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="orthogonal" renderorder="right-down" width="32" height="18" tilewidth="21" tileheight="21" nextobjectid="5">
+<map version="1.0" tiledversion="1.0.3" orientation="orthogonal" renderorder="right-down" width="32" height="18" tilewidth="21" tileheight="21" nextobjectid="9">
  <tileset firstgid="1" name="ld40-tiles-background" tilewidth="21" tileheight="21" tilecount="99" columns="11">
   <image source="../img/tiles-background.png" trans="5e81a2" width="231" height="189"/>
  </tileset>
@@ -52,6 +52,12 @@
  </layer>
  <objectgroup name="ground">
   <object id="1" x="0" y="357" width="672" height="21"/>
+ </objectgroup>
+ <objectgroup name="npc-spawn">
+  <object id="5" x="294" y="336" width="21" height="21"/>
+ </objectgroup>
+ <objectgroup name="pc-spawn">
+  <object id="6" x="42" y="336" width="21" height="21"/>
  </objectgroup>
  <objectgroup name="goal">
   <object id="3" x="588" y="336" width="21" height="21"/>
