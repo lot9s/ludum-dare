@@ -6,7 +6,7 @@
  <tileset firstgid="901" name="ld40-tiles-background" tilewidth="21" tileheight="21" tilecount="99" columns="11">
   <image source="../img/tiles-background.png" trans="5e81a2" width="231" height="189"/>
  </tileset>
- <layer name="background" width="64" height="18">
+ <layer name="background" width="64" height="18" visible="0">
   <data encoding="csv">
 941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,
 941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,941,
@@ -51,21 +51,15 @@
 </data>
  </layer>
  <objectgroup name="ground">
-  <object id="1" x="0" y="315" width="105" height="63"/>
-  <object id="2" x="147" y="315" width="210" height="63"/>
-  <object id="3" x="399" y="315" width="42" height="63"/>
-  <object id="4" x="483" y="315" width="42" height="63"/>
-  <object id="5" x="567" y="315" width="273" height="63"/>
-  <object id="7" x="903" y="315" width="441" height="63"/>
- </objectgroup>
- <objectgroup name="water">
-  <object id="12" x="105" y="336" width="42" height="42"/>
-  <object id="13" x="357" y="336" width="42" height="42"/>
-  <object id="16" x="441" y="336" width="42" height="42"/>
-  <object id="17" x="525" y="336" width="42" height="42"/>
+  <object id="1" x="0" y="315" width="94.5" height="63"/>
+  <object id="2" x="157.5" y="315" width="188" height="63"/>
+  <object id="3" x="409.5" y="315" width="21" height="63"/>
+  <object id="4" x="493.5" y="315" width="21" height="63"/>
+  <object id="5" x="578.5" y="315" width="252" height="63"/>
+  <object id="7" x="913.5" y="315" width="430.5" height="63"/>
  </objectgroup>
  <objectgroup name="lava">
-  <object id="19" x="840" y="336" width="63" height="42"/>
+  <object id="19" x="829.5" y="336" width="84" height="42"/>
  </objectgroup>
  <objectgroup name="npc-spawn">
   <object id="20" x="252" y="294" width="21" height="21"/>

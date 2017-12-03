@@ -4,6 +4,11 @@ let slash = null;
 
 let map = null;
 
+let state = {
+  end: false,
+  restartLevel: false,
+};
+
 
 /* --- game  --- */
 /*game = new Phaser.Game(672, 378, Phaser.AUTO, null, {*/
@@ -19,6 +24,8 @@ game = new Phaser.Game(378, 378, Phaser.AUTO, null, {
 class Avatar {
   constructor() {
     this.bootsOnGround = false;
+    this.bootsInWater = false;
+
     this.kills = 0;
 
     /* sprite */
@@ -33,8 +40,28 @@ class Avatar {
     game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
     this.sprite.body.collideWorldBounds = true;
 
+    /* vfx */
+    this.textTerror = game.add.text(0, -12, "TERROR UP!");
+    this.textTerror.fontSize = 12;
+    this.textTerror.addColor('#ff7700', 0);
+
     /* camera */
     game.camera.follow(this.sprite, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+  }
+
+  onKill() {
+    /* show terror up text */
+    if (this.kills < 2) {
+      this.textTerror.reset(this.sprite.x - 25, this.sprite.y - 5);
+
+      let terrorTween = game.add.tween(this.textTerror);
+
+      terrorTween.onComplete.add(function() {
+        this.textTerror.reset(0, -12);
+      }, this);
+
+      terrorTween.to({y: this.sprite.y - 18.5}, 500, "Linear", true);
+    }
   }
 }
 
@@ -50,7 +77,22 @@ class Monster {
     this.sprite.body.collideWorldBounds = true;
   }
 
+  onDeath() {
+    this.sprite.alpha = 0;
+    this.sprite.allowGravity = false;
+    this.sprite.body.velocity.x = 0;
+    this.sprite.reset(0, -21);
+  }
+
   update() {
+    /* idle */
+    if (this.sprite.body.blocked.down) {
+      this.sprite.body.velocity.x = 0;
+      this.sprite.body.velocity.y = 0;
+      return;
+    }
+
+    /* movement */
     let direction = (avatar.sprite.x - this.sprite.x) < 0 ? -1 : 1;
     this.sprite.body.velocity.x = 10 * direction;
 
@@ -88,7 +130,7 @@ class Slash {
 
     /* apply velocity to sprite */
     if (avatar.kills > 1) {
-      this.sprite.body.velocity.x = 2000;
+      this.sprite.body.velocity.x = 500;
     }
 
     /* play animation */
@@ -136,7 +178,10 @@ class Map {
     this.clear = false;
     this.goal = null;
     this.pcSpawn = null;
+    
     this.ground = [];
+    this.lava = [];
+    
     this.monsters = [];
 
     this.layers['background'].destroy();
@@ -155,6 +200,8 @@ class Map {
     this.pcSpawn = null;
 
     this.ground = [];
+    this.lava = [];
+
     this.monsters = [];
 
     /* parse each object layer */
@@ -194,6 +241,15 @@ class Map {
           objectSprite.body.allowGravity = false;
 
           self.ground.push(objectSprite);
+        }
+
+        /* lava objects */
+        if (layerKey == 'lava') {
+          game.physics.enable(objectSprite, Phaser.Physics.ARCADE);
+          objectSprite.body.collideWorldBounds = true;
+          objectSprite.body.allowGravity = false;
+
+          self.lava.push(objectSprite);
         }
       });
     }
@@ -241,23 +297,40 @@ function handleCollisionsGround() {
   });
 }
 
+function handleCollisionsLava() {
+  /* do computation */
+  map.lava.forEach(function(lavaObj, indexG) {
+    if (!state.restartLevel && 
+        game.physics.arcade.collide(avatar.sprite, lavaObj))
+    {
+      playerDeath();
+    }
+
+    map.monsters.forEach(function(monster, indexM) {
+      if (game.physics.arcade.collide(monster.sprite, lavaObj)) {
+        monster.onDeath();
+      }
+    });
+  });
+}
+
 function handleCollisionsMonsters() {
   map.monsters.forEach(function(monster, indexM) {
     game.physics.arcade.collide(avatar.sprite, monster.sprite);
 
     /* kill detection */
-    let monsterKill = game.physics.arcade.overlap(slash.sprite, monster.sprite);
-    if (monsterKill) {
+    if (game.physics.arcade.overlap(slash.sprite, monster.sprite)) {
       monster.sprite.kill();
+
+      avatar.onKill();
       avatar.kills += 1;
     }
   });
 }
 
 function handleCollisionsWorld() {
-  if (avatar.sprite.body.blocked.down) {
-    // TODO: write death logic
-    restartLevel();
+  if (!state.end && !state.restartLevel && avatar.sprite.body.blocked.down) {
+    playerDeath();
   }
 }
 
@@ -265,27 +338,53 @@ function handleInput() {
   let arrowKeysDown = game.cursorKeys.left.isDown ||
                       game.cursorKeys.right.isDown;
 
+  /* ground */
   if (avatar.bootsOnGround) {
+    /* left walk */
     if (game.cursorKeys.left.isDown) {
       avatar.sprite.body.velocity.x = -50 + (-5 * avatar.kills);
       avatar.sprite.animations.play('walk', 5);
     }
 
+    /* right walk */
     if (game.cursorKeys.right.isDown) {
       avatar.sprite.body.velocity.x = 50 + (5 * avatar.kills);
       avatar.sprite.animations.play('walk', 5);
     }
 
+    /* jump */
     if (game.cursorKeys.up.isDown) {
       avatar.sprite.body.velocity.y = -50 + (-5 * avatar.kills);
       game.sfxJump.play();
     }
 
+    /* idle */
     if (!arrowKeysDown) {
       avatar.sprite.body.velocity.x = 0;
       avatar.sprite.animations.play('idle');
     }
+
+  /* air */
+  } else {
+    if (game.cursorKeys.left.isDown) {
+      avatar.sprite.body.velocity.x = -50;
+    }
+
+    if (game.cursorKeys.right.isDown) {
+      avatar.sprite.body.velocity.x = 50;
+    }
   }
+}
+
+function playerDeath() {
+  /* update state */
+  state.restartLevel = true;
+
+  /* player death */
+  avatar.sprite.alpha = 0;
+  game.sfxDeath1.play();
+
+  restartLevel();
 }
 
 function restartLevel() {
@@ -300,12 +399,16 @@ function restartLevel() {
       map = new Map(game.levelProgression[game.level]);
 
       /* re-position player character */
+      avatar.sprite.alpha = 1;
       avatar.sprite.bringToTop();
-      avatar.sprite.x = map.pcSpawn.x;
-      avatar.sprite.y = map.pcSpawn.y;
-    
+      avatar.sprite.reset(map.pcSpawn.x, map.pcSpawn.y);
+      avatar.textTerror.bringToTop();
+ 
       /* re-position slash */
       slash.sprite.bringToTop();
+
+      /* update state */
+      state.restartLevel = false;
     }
   });
 
@@ -320,17 +423,22 @@ function startNextLevel() {
     map.cleanUp();
     game.level += 1;
 
+    /* middle of game */
     if (game.level < game.levelProgression.length) {
       /* display new map */
       map = new Map(game.levelProgression[game.level]);
 
       /* re-position player character */
       avatar.sprite.bringToTop();
-      avatar.sprite.x = map.pcSpawn.x;
-      avatar.sprite.y = map.pcSpawn.y;
+      avatar.sprite.reset(map.pcSpawn.x, map.pcSpawn.y);
+      avatar.textTerror.bringToTop();
     
       /* re-position slash */
       slash.sprite.bringToTop();
+
+    /* end of game */
+    } else {
+      state.end = true;
     }
   });
 
@@ -359,6 +467,10 @@ function preload() {
 
   /* audio */
   game.load.audio('bgm', 'res/bgm/bgm.mp3');
+  game.load.audio('death1', 'res/sfx/death1.wav');
+  game.load.audio('death2', 'res/sfx/death2.ogg');
+  game.load.audio('death3', 'res/sfx/death3.mp3');
+  game.load.audio('death4', 'res/sfx/death4.wav');
   game.load.audio('jump', 'res/sfx/jump.mp3');
   game.load.audio('scream1', 'res/sfx/scream1.ogg');
   game.load.audio('scream2', 'res/sfx/scream2.wav');
@@ -386,6 +498,10 @@ function create() {
   slash = new Slash();
 
   /* sfx */
+  game.sfxDeath1 = game.add.audio('death1');
+  game.sfxDeath2 = game.add.audio('death2');
+  game.sfxDeath3 = game.add.audio('death3');
+  game.sfxDeath4 = game.add.audio('death4');
   game.sfxJump = game.add.audio('jump');
   game.sfxScream1 = game.add.audio('scream1');
   game.sfxScream2 = game.add.audio('scream2');
@@ -403,6 +519,8 @@ function update() {
 
   /* collisions */
   handleCollisionsGround();
+  handleCollisionsLava();
+
   handleCollisionsMonsters();
   handleCollisionsGoal();
 
