@@ -3,6 +3,7 @@ let avatar = null;
 let slash = null;
 
 let map = null;
+let hud = null;
 
 let state = {
   end: false,
@@ -51,26 +52,28 @@ class Avatar {
 
   onKill() {
     /* show terror up text */
-    if (this.kills < 2) {
-      this.textTerror.reset(this.sprite.x - 25, this.sprite.y - 5);
+    this.textTerror.reset(this.sprite.x - 25, this.sprite.y - 5);
 
-      let terrorTween = game.add.tween(this.textTerror);
+    let terrorTween = game.add.tween(this.textTerror);
 
-      terrorTween.onComplete.add(function() {
-        this.textTerror.reset(0, -12);
-      }, this);
+    terrorTween.onComplete.add(function() {
+      this.textTerror.reset(0, -12);
+    }, this);
 
-      terrorTween.to({y: this.sprite.y - 18.5}, 500, "Linear", true);
-    }
+    terrorTween.to({y: this.sprite.y - 18.5}, 500, "Linear", true);
   }
 }
 
 class Monster {
   constructor(spawnX, spawnY) {
     this.bootsOnGround = false;
+    this.ghost = false;
 
     /* sprite */
     this.sprite = game.add.sprite(spawnX, spawnY, 'master-sheet', 171);
+
+    /* animation */
+    this.sprite.animations.add('ghost', [445]);
 
     /* physics */
     game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
@@ -84,7 +87,33 @@ class Monster {
     this.sprite.reset(0, -21);
   }
 
+  onKilled() {
+    /* update state */
+    this.ghost = true;
+
+    /* update physics */
+    this.sprite.y -= 42;
+    this.sprite.body.allowGravity = false;
+
+    /* sfx */
+    game.sfxDeath3.play();
+
+    /* vfx */
+    this.sprite.animations.play('ghost');
+
+    /* tween */
+    let ghostTween = game.add.tween(this.sprite);
+    ghostTween.to({y: this.sprite.y - 100}, 1000, "Linear", true);
+  }
+
   update() {
+    /* restarting level */
+    if (map.clear || state.restartLevel) {
+      this.sprite.body.velocity.x = 0;
+      this.sprite.body.velocity.y = 0;
+      return;
+    }
+
     /* idle */
     if (this.sprite.body.blocked.down) {
       this.sprite.body.velocity.x = 0;
@@ -93,11 +122,22 @@ class Monster {
     }
 
     /* movement */
-    let direction = (avatar.sprite.x - this.sprite.x) < 0 ? -1 : 1;
-    this.sprite.body.velocity.x = 10 * direction;
+    let xDirection = (avatar.sprite.x - this.sprite.x) < 0 ? -1 : 1;
+    let yDirection = (avatar.sprite.y - this.sprite.y) < 0 ? -1 : 1;
+    if (!this.ghost) {
+      this.sprite.body.velocity.x = 10 * xDirection;
 
-    if (this.bootsOnGround) {
-      this.sprite.body.velocity.y = -50;
+      if (this.bootsOnGround) {
+        this.sprite.body.velocity.y = -50;
+      }
+
+    /* movement ghost */
+    } else {
+      if (Math.abs(avatar.sprite.x - this.sprite.x) <= 21) { xDirection = 0; }
+      if (Math.abs(avatar.sprite.y - this.sprite.y) <= 21) { yDirection = 0; }
+
+      this.sprite.body.velocity.x = (15 + (5 * avatar.kills)) * xDirection;
+      this.sprite.body.velocity.y = (15 + (5 * avatar.kills)) * yDirection;
     }
   }
 }
@@ -118,30 +158,82 @@ class Slash {
   }
 
   onSpace() {
-    /* play sfx */
-    game.sfxSlash.play();
+    if (!state.restartLevel) {
+      /* play sfx */
+      game.sfxSlash.play();
 
-    if (avatar.kills > 0) { game.sfxScream1.play(); }
-    if (avatar.kills > 1) { game.sfxScream2.play(); }
+      if (avatar.kills > 0) { game.sfxScream1.play(); }
+      if (avatar.kills > 1) { game.sfxScream2.play(); }
 
-    /* move slash sprite in front of player character */
-    this.sprite.x = avatar.sprite.x + (avatar.sprite.width / 2);
-    this.sprite.y = avatar.sprite.y - (avatar.sprite.width / 2);
+      /* move slash sprite in front of player character */
+      this.sprite.x = avatar.sprite.x + (avatar.sprite.width / 2);
+      this.sprite.y = avatar.sprite.y - (avatar.sprite.width / 2);
 
-    /* apply velocity to sprite */
-    if (avatar.kills > 1) {
-      this.sprite.body.velocity.x = 500;
+      /* apply velocity to sprite */
+      if (avatar.kills > 1) {
+        this.sprite.body.velocity.x = 500;
+      }
+
+      /* play animation */
+      this.sprite.animations.play('attack', 30);
+
+      /* hide slash sprite at end of animation */
+      this.sprite.animations.currentAnim.onComplete.add(function() {
+        this.sprite.x = -32;
+        this.sprite.y = -32;
+        this.sprite.body.velocity.x = 0;
+      }, this);
     }
+  }
+}
 
-    /* play animation */
-    this.sprite.animations.play('attack', 30);
+class HUD {
+  constructor() {
+    /* sprites */
+    this.spriteHeart = game.add.sprite(21, 21, 'master-sheet', 373);
+    this.spriteHeart.fixedToCamera = true;
 
-    /* hide slash sprite at end of animation */
-    this.sprite.animations.currentAnim.onComplete.add(function() {
-      this.sprite.x = -32;
-      this.sprite.y = -32;
-      this.sprite.body.velocity.x = 0;
-    }, this);
+    this.spriteX = game.add.sprite(47, 21, 'master-sheet', 467);
+    this.spriteX.fixedToCamera = true;
+
+    this.spriteTens = game.add.sprite(68, 21, 'master-sheet', 434);
+    this.spriteTens.animations.add('0', [434]);
+    this.spriteTens.animations.add('1', [435]);
+    this.spriteTens.animations.add('2', [436]);
+    this.spriteTens.animations.add('3', [437]);
+    this.spriteTens.animations.add('4', [438]);
+    this.spriteTens.animations.add('5', [439]);
+    this.spriteTens.animations.add('6', [463]);
+    this.spriteTens.animations.add('7', [464]);
+    this.spriteTens.animations.add('8', [465]);
+    this.spriteTens.animations.add('9', [466]);
+    this.spriteTens.fixedToCamera = true;
+
+    this.spriteDigits = game.add.sprite(89, 21, 'master-sheet', 434);
+    this.spriteDigits.animations.add('0', [434]);
+    this.spriteDigits.animations.add('1', [435]);
+    this.spriteDigits.animations.add('2', [436]);
+    this.spriteDigits.animations.add('3', [437]);
+    this.spriteDigits.animations.add('4', [438]);
+    this.spriteDigits.animations.add('5', [439]);
+    this.spriteDigits.animations.add('6', [463]);
+    this.spriteDigits.animations.add('7', [464]);
+    this.spriteDigits.animations.add('8', [465]);
+    this.spriteDigits.animations.add('9', [466]);
+    this.spriteDigits.fixedToCamera = true;
+  }
+
+  onKill() {
+    this.spriteTens.animations.play( String(avatar.kills / 10) );
+    this.spriteDigits.animations.play( String(avatar.kills % 10) );
+  }
+
+  onRestartLevel() {
+    this.spriteHeart.bringToTop();
+    this.spriteX.bringToTop();
+
+    this.spriteTens.bringToTop();
+    this.spriteDigits.bringToTop();
   }
 }
 
@@ -182,6 +274,10 @@ class Map {
     this.ground = [];
     this.lava = [];
     
+    this.monsters.forEach(function(monster, index) {
+      monster.onDeath();
+    });
+
     this.monsters = [];
 
     this.layers['background'].destroy();
@@ -315,16 +411,28 @@ function handleCollisionsLava() {
 }
 
 function handleCollisionsMonsters() {
-  map.monsters.forEach(function(monster, indexM) {
-    game.physics.arcade.collide(avatar.sprite, monster.sprite);
+  map.monsters.forEach(function(monsterM, indexM) {
+    /* player */
+    let monsterTouch =
+      game.physics.arcade.collide(avatar.sprite, monsterM.sprite);
+    if (!state.restartLevel && monsterM.ghost && monsterTouch) {
+      playerDeath("ghost");
+    }
 
     /* kill detection */
-    if (game.physics.arcade.overlap(slash.sprite, monster.sprite)) {
-      monster.sprite.kill();
+    if (game.physics.arcade.overlap(slash.sprite, monsterM.sprite)) {
+      monsterM.onKilled();
 
       avatar.onKill();
       avatar.kills += 1;
+
+      hud.onKill();
     }
+
+    /* monster detection */
+    map.monsters.forEach(function(monsterN, indexN) {
+      game.physics.arcade.collide(monsterM.sprite, monsterN.sprite);
+    });
   });
 }
 
@@ -367,22 +475,23 @@ function handleInput() {
   /* air */
   } else {
     if (game.cursorKeys.left.isDown) {
-      avatar.sprite.body.velocity.x = -50;
+      avatar.sprite.body.velocity.x = -50 + (-5 * avatar.kills);
     }
 
     if (game.cursorKeys.right.isDown) {
-      avatar.sprite.body.velocity.x = 50;
+      avatar.sprite.body.velocity.x = 50 + (5 * avatar.kills);
     }
   }
 }
 
-function playerDeath() {
+function playerDeath(type) {
   /* update state */
   state.restartLevel = true;
 
   /* player death */
   avatar.sprite.alpha = 0;
-  game.sfxDeath1.play();
+  if (type == "ghost") { game.sfxDeath4.play(); }
+  else                 { game.sfxDeath1.play(); }
 
   restartLevel();
 }
@@ -397,6 +506,9 @@ function restartLevel() {
     if (game.level < game.levelProgression.length) {
       /* display new map */
       map = new Map(game.levelProgression[game.level]);
+
+      /* re-position hud */
+      hud.onRestartLevel();
 
       /* re-position player character */
       avatar.sprite.alpha = 1;
@@ -427,6 +539,9 @@ function startNextLevel() {
     if (game.level < game.levelProgression.length) {
       /* display new map */
       map = new Map(game.levelProgression[game.level]);
+
+      /* re-position hud */
+      hud.onRestartLevel();
 
       /* re-position player character */
       avatar.sprite.bringToTop();
@@ -492,6 +607,9 @@ function create() {
 
   /* map */
   map = new Map('ld40-test-map');
+
+  /* ui */
+  hud = new HUD();
 
   /* sprites */
   avatar = new Avatar();
