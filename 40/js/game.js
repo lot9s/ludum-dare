@@ -13,7 +13,7 @@ let state = {
 
 /* --- game  --- */
 /*game = new Phaser.Game(672, 378, Phaser.AUTO, null, {*/
-game = new Phaser.Game(378, 378, Phaser.AUTO, null, {
+game = new Phaser.Game(378, 378, Phaser.AUTO, 'game', {
   preload: preload,
   create: create,
   update: update,
