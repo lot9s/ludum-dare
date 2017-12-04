@@ -62,6 +62,20 @@ class Avatar {
 
     terrorTween.to({y: this.sprite.y - 18.5}, 500, "Linear", true);
   }
+
+  onRestartLevel() {
+    this.sprite.alpha = 1;
+    this.sprite.bringToTop();
+    this.sprite.reset(map.pcSpawn.x, map.pcSpawn.y);
+    this.textTerror.bringToTop();
+  }
+
+  onStartNextLevel() {
+    this.sprite.bringToTop();
+    this.sprite.reset(map.pcSpawn.x, map.pcSpawn.y);
+
+    this.textTerror.bringToTop();
+  }
 }
 
 class Monster {
@@ -154,10 +168,14 @@ class Slash {
     game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
     this.sprite.body.allowGravity = false;
 
-    game.spaceKey.onDown.add(this.onSpace, this);
+    game.spaceKey.onDown.add(this.onSpaceKey, this);
   }
 
-  onSpace() {
+  onRestartLevel() {
+    slash.sprite.bringToTop();
+  }
+
+  onSpaceKey() {
     if (!state.restartLevel) {
       /* play sfx */
       game.sfxSlash.play();
@@ -421,12 +439,14 @@ function handleCollisionsMonsters() {
 
     /* kill detection */
     if (game.physics.arcade.overlap(slash.sprite, monsterM.sprite)) {
-      monsterM.onKilled();
+      if (!monsterM.ghost) {
+        monsterM.onKilled();
 
-      avatar.onKill();
-      avatar.kills += 1;
+        avatar.onKill();
+        avatar.kills += 1;
 
-      hud.onKill();
+        hud.onKill();
+      }
     }
 
     /* monster detection */
@@ -507,17 +527,11 @@ function restartLevel() {
       /* display new map */
       map = new Map(game.levelProgression[game.level]);
 
-      /* re-position hud */
+      /* reset some game objects */
       hud.onRestartLevel();
 
-      /* re-position player character */
-      avatar.sprite.alpha = 1;
-      avatar.sprite.bringToTop();
-      avatar.sprite.reset(map.pcSpawn.x, map.pcSpawn.y);
-      avatar.textTerror.bringToTop();
- 
-      /* re-position slash */
-      slash.sprite.bringToTop();
+      avatar.onRestartLevel();
+      slash.onRestartLevel();
 
       /* update state */
       state.restartLevel = false;
@@ -540,20 +554,23 @@ function startNextLevel() {
       /* display new map */
       map = new Map(game.levelProgression[game.level]);
 
-      /* re-position hud */
+      /* reset some game objects */
       hud.onRestartLevel();
-
-      /* re-position player character */
-      avatar.sprite.bringToTop();
-      avatar.sprite.reset(map.pcSpawn.x, map.pcSpawn.y);
-      avatar.textTerror.bringToTop();
-    
-      /* re-position slash */
-      slash.sprite.bringToTop();
+      avatar.onStartNextLevel();
+      slash.onRestartLevel();
 
     /* end of game */
     } else {
+      /* update state */
       state.end = true;
+
+      /* display new map */
+      map = new Map('end');
+
+      /* reset some game objects */
+      hud.onRestartLevel();
+      avatar.onStartNextLevel();
+      slash.onRestartLevel();
     }
   });
 
@@ -564,9 +581,15 @@ function startNextLevel() {
 /* --- life cycle functions --- */
 function preload() {
   /* tilemaps */
-  game.load.tilemap('ld40-test-map', 'res/map/ld40-test-map.json', null,
+  game.load.tilemap('level0', 'res/map/level0.json', null,
                     Phaser.Tilemap.TILED_JSON);
   game.load.tilemap('level1', 'res/map/level1.json', null,
+                    Phaser.Tilemap.TILED_JSON);
+  game.load.tilemap('level2', 'res/map/level2.json', null,
+                    Phaser.Tilemap.TILED_JSON);
+  game.load.tilemap('level3', 'res/map/level3.json', null,
+                    Phaser.Tilemap.TILED_JSON);
+  game.load.tilemap('end', 'res/map/end.json', null,
                     Phaser.Tilemap.TILED_JSON);
 
   /* tiles */
@@ -595,7 +618,7 @@ function preload() {
 
 function create() {
   game.level = 0;
-  game.levelProgression = ['ld40-test-map', 'level1'];
+  game.levelProgression = ['level0', 'level1', 'level2', 'level3'];
 
   /* cursors declaration */
   game.cursorKeys = game.input.keyboard.createCursorKeys();
@@ -606,7 +629,7 @@ function create() {
   game.physics.arcade.gravity.y = 105;
 
   /* map */
-  map = new Map('ld40-test-map');
+  map = new Map('level0');
 
   /* ui */
   hud = new HUD();
