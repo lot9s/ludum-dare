@@ -8,7 +8,12 @@ let state = {
         key_right: null,
         key_space: null
     },
+    /* sprites */
     avatar: null,
+    altar: {
+        sprite: null,
+        sfx: null
+    },
     offering: {
         img: null,
         alpha: 0
@@ -35,7 +40,6 @@ let SceneCraft = new Phaser.Class({
         //this.load.audio('credits', ['res/bgm/332489__neehnahw__calm-down.wav']);
         //this.load.audio('epilogue', ['res/bgm/209334__kvgarlic__guitardandcwithlongerfade.wav']);
         //this.load.audio('resolution', ['res/bgm/365187__furbyguy__chill-liquid-trap-loop.wav']);
-        //this.load.audio('words', ['res/bgm/198416__divinux__ambientbell.wav']);
 
         /* images */
         this.load.image('rose', 'res/img/rose.png');
@@ -47,10 +51,6 @@ let SceneCraft = new Phaser.Class({
         state.bgm.play();
 
         /* create input */
-        state.input.key_a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        state.input.key_d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        state.input.key_left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
-        state.input.key_right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
         state.input.key_space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         /* create offering */
@@ -90,8 +90,24 @@ let SceneExploration = new Phaser.Class({
         state.bgm = this.sound.add('explore5', { loop: true });
         state.bgm.play();
 
-        /* create avatar */
-        state.avatar.img = this.add.image(320, 240, 'avatar');
+        state.altar.sfx = this.sound.add('words');
+
+        /* create input */
+        state.input.key_a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        state.input.key_d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        state.input.key_left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+        state.input.key_right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+
+        /* create sprites */
+        state.altar.sprite = this.physics.add.staticSprite(480, 240, 'altar');
+        state.altar.sprite.setCollideWorldBounds(true);
+
+        state.avatar = this.physics.add.sprite(320, 240, 'avatar');
+        state.avatar.setCollideWorldBounds(true);
+        state.avatar.body.setAllowGravity(false);
+
+        /* create colliders */
+        this.physics.add.collider(state.avatar, state.altar.sprite, this.onAltarCollide, null, this);
     },
 
     preload: function() {
@@ -104,8 +120,10 @@ let SceneExploration = new Phaser.Class({
         //this.load.audio('explore3', ['res/bgm/401245__rileywarren__getting-to-the-winery.wav']);
         //this.load.audio('explore4', ['res/bgm/416494__eardeer__eroika-remix.wav']);
         this.load.audio('explore5', ['res/bgm/441250__cummingtt__action4me-mixdown.wav']);
+        this.load.audio('words', ['res/bgm/198416__divinux__ambientbell.wav']);
 
         /* images */
+        this.load.image('altar', 'res/img/altar.png');
         this.load.image('avatar', 'res/img/avatar.png');
     },
 
@@ -114,9 +132,19 @@ let SceneExploration = new Phaser.Class({
     },
 
     update: function() {
+        /* move right */
         if (state.input.key_d.isDown || state.input.key_right.isDown) {
-            // TODO: move avatar to the right
+            state.avatar.body.setVelocity(25,0);
         }
+
+        /* move left */
+        if (state.input.key_a.isDown || state.input.key_left.isDown) {
+            state.avatar.body.setVelocity(-25,0);
+        }
+    },
+
+    onAltarCollide: function() {
+        state.altar.sfx.play();
     }
 });
 
