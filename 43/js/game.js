@@ -403,7 +403,7 @@ let SceneEpilogue = new Phaser.Class({
 /* phaser 3 configuration */
 let config = {
     version: '0.0.2',
-    title: '',
+    title: 'An Offering',
     width: 640,
     height: 480,
     parent: 'game',
