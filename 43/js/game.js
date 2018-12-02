@@ -55,7 +55,7 @@ let SceneCraft = new Phaser.Class({
 
         /* create offering */
         state.offering.img = this.add.image(320, 240, 'rose');
-        state.offering.img.setScale(0.25).setAlpha(state.offering.alpha / 25);
+        state.offering.img.setScale(0.25).setAlpha(state.offering.alpha / 10);
 
         /* create text */
         this.add.text(20, 440, 'Press SPACE repeatedly to reveal offering.', {
@@ -71,10 +71,10 @@ let SceneCraft = new Phaser.Class({
         /* craft */
         if (Phaser.Input.Keyboard.JustDown(state.input.key_space)) {
             state.offering.alpha += 1;
-            state.offering.img.setAlpha(state.offering.alpha / 25);
+            state.offering.img.setAlpha(state.offering.alpha / 10);
 
             /* finish crafting */
-            if (state.offering.alpha >= 25) {
+            if (state.offering.alpha >= 10) {
                 state.bgm.stop();
                 this.scene.start('scene_exploration');
             }
