@@ -38,9 +38,6 @@ let SceneCraft = new Phaser.Class({
     },
 
     preload: function() {
-        /* local deployment */
-        this.load.setBaseURL('http://localhost/phaser/ludum-dare/43/');
-
         /* audio */
         this.load.audio('craft', ['res/bgm/craft.wav']);
 
@@ -108,9 +105,6 @@ let SceneExploration = new Phaser.Class({
     },
 
     preload: function() {
-        /* local deployment */
-        this.load.setBaseURL('http://localhost/phaser/ludum-dare/43/');
-
         /* audio */
         this.load.audio('explore', ['res/bgm/explore.wav']);
         this.load.audio('words', ['res/bgm/words.wav']);
@@ -409,7 +403,7 @@ let SceneEpilogue = new Phaser.Class({
 /* phaser 3 configuration */
 let config = {
     version: '0.0.2',
-    title: '',
+    title: 'An Offering',
     width: 640,
     height: 480,
     parent: 'game',
