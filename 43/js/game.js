@@ -39,7 +39,7 @@ let SceneCraft = new Phaser.Class({
 
     preload: function() {
         /* local deployment */
-        this.load.setBaseURL('http://localhost/phaser/ludum-dare/43/');
+        this.load.setBaseURL('https://lot9s.github.io/ludum-dare/43/');
 
         /* audio */
         this.load.audio('craft', ['res/bgm/craft.wav']);
