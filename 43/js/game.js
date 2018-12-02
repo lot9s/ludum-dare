@@ -42,10 +42,7 @@ let SceneCraft = new Phaser.Class({
         this.load.setBaseURL('http://localhost/phaser/ludum-dare/43/');
 
         /* audio */
-        //this.load.audio('intro', ['res/bgm/416624__jominvg__prelude-no-12.mp3']);
-        this.load.audio('craft', ['res/bgm/346387__levelclearer__eternity20.wav']);
-        //this.load.audio('credits', ['res/bgm/332489__neehnahw__calm-down.wav']);
-        //this.load.audio('resolution', ['res/bgm/365187__furbyguy__chill-liquid-trap-loop.wav']);
+        this.load.audio('craft', ['res/bgm/craft.wav']);
 
         /* images */
         this.load.image('rose', 'res/img/rose.png');
@@ -58,7 +55,7 @@ let SceneCraft = new Phaser.Class({
 
         /* create offering */
         state.offering.img = this.add.image(320, 240, 'rose');
-        state.offering.img.setScale(0.25).setAlpha(state.offering.alpha / 10);
+        state.offering.img.setScale(0.25).setAlpha(state.offering.alpha / 25);
 
         /* create text */
         this.add.text(20, 440, 'Press SPACE repeatedly to reveal offering.', {
@@ -70,18 +67,14 @@ let SceneCraft = new Phaser.Class({
         state.input.key_space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     },
 
-    render: function() {
-
-    },
-
     update: function() {
         /* craft */
         if (Phaser.Input.Keyboard.JustDown(state.input.key_space)) {
             state.offering.alpha += 1;
-            state.offering.img.setAlpha(state.offering.alpha / 10);
+            state.offering.img.setAlpha(state.offering.alpha / 25);
 
             /* finish crafting */
-            if (state.offering.alpha >= 10) {
+            if (state.offering.alpha >= 25) {
                 state.bgm.stop();
                 this.scene.start('scene_exploration');
             }
@@ -93,6 +86,23 @@ let SceneCraft = new Phaser.Class({
 let SceneExploration = new Phaser.Class({
     Extends: Phaser.Scene,
 
+    /* constants */
+    WORDS: [
+        'The truth hurts.',
+        'Life is short.',
+        'Change is inevitable.',
+        'Knowledge is power.',
+        'Truth cannot be destroyed.'
+    ],
+
+    FINAL_ITERATION: 5,
+
+    /* flags */
+    teleporting: false,
+
+    /* text object for 'words of wisdom' */
+    words: null,
+
     initialize: function SceneExploration() {
         Phaser.Scene.call(this, {key: 'scene_exploration'});
     },
@@ -102,8 +112,8 @@ let SceneExploration = new Phaser.Class({
         this.load.setBaseURL('http://localhost/phaser/ludum-dare/43/');
 
         /* audio */
-        this.load.audio('explore', ['res/bgm/441250__cummingtt__action4me-mixdown.wav']);
-        this.load.audio('words', ['res/bgm/198416__divinux__ambientbell.wav']);
+        this.load.audio('explore', ['res/bgm/explore.wav']);
+        this.load.audio('words', ['res/bgm/words.wav']);
 
         /* images */
         this.load.image('altar', 'res/img/altar.png');
@@ -125,6 +135,7 @@ let SceneExploration = new Phaser.Class({
         /* create sprites */
         state.altar.sprite = this.physics.add.staticSprite(480, 240, 'altar');
         state.altar.sprite.setScale(1.5);
+        state.altar.sprite.refreshBody(1.5);
         state.altar.sprite.setCollideWorldBounds(true);
 
         /* create avatars */
@@ -152,25 +163,51 @@ let SceneExploration = new Phaser.Class({
         this.physics.add.collider(state.avatar, state.altar.sprite, this.onAltarCollide, null, this);
 
         /* create text */
-        this.add.text(90, 440, 'Press WASD to navigate to altar.', {
+        this.add.text(90, 440, 'Press WASD to navigate to shrine.', {
             fontSize: '24px',
             fill: '#FFF'
         });
 
+        words = this.add.text(0, 0, this.WORDS[state.iteration], { fontSize: '16px', fill: '#FFF'});
+        words.x = state.altar.sprite.x - (words.width / 2);
+        words.y = state.altar.sprite.y - 113;
+        words.setAlpha(0);
+
         /* create input */
+        state.input.key_w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        state.input.key_s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         state.input.key_a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         state.input.key_d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        state.input.key_up = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        state.input.key_down = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
         state.input.key_left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
         state.input.key_right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
     },
 
-    render: function() {
-
-    },
-
     update: function() {
-        let keysDown = state.input.key_d.isDown || state.input.key_right.isDown ||
+        let keysDown = state.input.key_w.isDown || state.input.key_up.isDown    ||
+                       state.input.key_s.isDown || state.input.key_down.isDown  ||
+                       state.input.key_d.isDown || state.input.key_right.isDown ||
                        state.input.key_a.isDown || state.input.key_left.isDown;
+
+        /* no movement */
+        if (!keysDown || this.teleporting || state.iteration >= this.FINAL_ITERATION) {
+            state.avatar.body.setVelocity(0);
+            state.avatar.anims.play('idle');
+            return;
+        }
+
+        /* move up */
+        if (state.input.key_w.isDown || state.input.key_up.isDown) {
+            state.avatar.body.setVelocity(0,-64);
+            state.avatar.anims.play('right', true);
+        }
+
+        /* move down */
+        if (state.input.key_s.isDown || state.input.key_down.isDown) {
+            state.avatar.body.setVelocity(0,64);
+            state.avatar.anims.play('right', true);
+        }
 
         /* move right */
         if (state.input.key_d.isDown || state.input.key_right.isDown) {
@@ -186,18 +223,63 @@ let SceneExploration = new Phaser.Class({
             state.avatar.setFlip(true, false);
 
         }
-
-        /* no movement */
-        if (!keysDown) {
-            state.avatar.body.setVelocity(0);
-            state.avatar.anims.play('idle');
-        }
     },
 
     onAltarCollide: function() {
-        state.bgm.stop();
+        console.log('onAltarCollide');
+        this.teleporting = true;
+
         state.altar.sfx.play();
-        this.scene.start('scene_epilogue');
+
+        /* animate 'words of wisdom' */
+        this.tweens.add({ targets: words, alpha: 1, duration: 2000, delay: 0 });
+
+        state.iteration += 1;
+        if (state.iteration < this.FINAL_ITERATION) {
+            /* teleport altar */
+            this.time.addEvent({
+                delay: 3000,
+                callback: function() {
+                    if (state.iteration % 2 == 0) {
+                        /* update altar */
+                        state.altar.sprite.x = 480;
+                        state.altar.sprite.y = Phaser.Math.Between(150,350);
+                        state.altar.sprite.resetFlip();
+                        state.altar.sprite.refreshBody();
+
+                        /* update words */
+                        words.setText(this.WORDS[state.iteration]);
+                        words.x = state.altar.sprite.x - (words.width / 2);
+                        words.y = state.altar.sprite.y - 113;
+                        words.setAlpha(0);
+                    } else {
+                        /* update altar */
+                        state.altar.sprite.x = 160;
+                        state.altar.sprite.y = Phaser.Math.Between(150, 350);
+                        state.altar.sprite.setFlip(true, false);
+                        state.altar.sprite.refreshBody();
+
+                        /* update words */
+                        words.setText(this.WORDS[state.iteration]);
+                        words.x = state.altar.sprite.x - (words.width / 2);
+                        words.y = state.altar.sprite.y - 113;
+                        words.setAlpha(0);
+                    }
+
+                    this.teleporting = false;
+                },
+                callbackScope: this
+            });
+        } else {
+            state.bgm.stop();
+
+            /* transition to epilogue */
+            this.time.addEvent({
+                delay: 5000,
+                callback: function() { this.scene.start('scene_epilogue'); },
+                callbackScope: this
+            });
+        }
     }
 });
 
@@ -211,7 +293,7 @@ let SceneEpilogue = new Phaser.Class({
 
     preload: function() {
         /* audio */
-        this.load.audio('epilogue', ['res/bgm/209334__kvgarlic__guitardandcwithlongerfade.wav']);
+        this.load.audio('epilogue', ['res/bgm/epilogue.wav']);
 
         /* images */
         this.load.image('pillar', 'res/img/pillar.png');
@@ -227,16 +309,6 @@ let SceneEpilogue = new Phaser.Class({
         /* create music */
         state.bgm = this.sound.add('epilogue', { loop: true });
         state.bgm.play();
-
-        /* create input */
-        state.input.key_w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        state.input.key_s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        state.input.key_a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        state.input.key_d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        state.input.key_up = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
-        state.input.key_down = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
-        state.input.key_left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
-        state.input.key_right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
 
         /* create avatar */
         state.avatar = this.physics.add.sprite(320, 240, 'avatar', 23);
@@ -280,10 +352,16 @@ let SceneEpilogue = new Phaser.Class({
             fontSize: '24px',
             fill: '#FFF'
         });
-    },
 
-    render: function() {
-
+        /* create input */
+        state.input.key_w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        state.input.key_s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        state.input.key_a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        state.input.key_d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        state.input.key_up = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        state.input.key_down = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+        state.input.key_left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+        state.input.key_right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
     },
 
     update: function() {
@@ -291,6 +369,12 @@ let SceneEpilogue = new Phaser.Class({
                        state.input.key_s.isDown || state.input.key_down.isDown  ||
                        state.input.key_d.isDown || state.input.key_right.isDown ||
                        state.input.key_a.isDown || state.input.key_left.isDown;
+
+        /* no movement */
+        if (!keysDown) {
+            state.avatar.body.setVelocity(0);
+            state.avatar.anims.play('idle');
+        }
 
         /* move up */
         if (state.input.key_w.isDown || state.input.key_up.isDown) {
@@ -316,12 +400,6 @@ let SceneEpilogue = new Phaser.Class({
             state.avatar.body.setVelocity(-64,0);
             state.avatar.anims.play('right', true);
             state.avatar.setFlip(true, false);
-        }
-
-        /* no movement */
-        if (!keysDown) {
-            state.avatar.body.setVelocity(0);
-            state.avatar.anims.play('idle');
         }
     } 
 });
