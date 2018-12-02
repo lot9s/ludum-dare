@@ -22,3 +22,24 @@ This short, 2D side-scroller is jam-packed with weirdness. Play it [here](https:
 ### Credits:
 * lot9s
 
+<br>
+
+## 41: Ok Tactics!
+
+This is a tactical dating sim! Get it [here](https://ldjam.com/events/ludum-dare/41/ok-tactics)!
+
+### Credits:
+* lot9s
+* snugglehero
+* sorlock
+
+<br>
+
+
+## 43: An Offering
+
+Rather than a game, this would best be described as a short, contemplative interactive experience. Play it [here](https://lot9s.github.io/ludum-dare/38/).
+
+### Credits:
+* lot9s
+
