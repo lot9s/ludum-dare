@@ -11,7 +11,7 @@ class TitleScene extends Phaser.Scene {
     }
 
     create(data) {
-        /* TODO: */
+        this.add.image(0, 0, 'background-title').setOrigin(0);
     }
 
     preload() {
