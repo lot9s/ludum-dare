@@ -3,15 +3,16 @@ const Phaser = require('phaser');
 const { GameScene } = require('./scenes/game-scene.js');
 const { LoadScene } = require('./scenes/load-scene.js');
 const { TitleScene } = require('./scenes/title-scene.js');
+const { ShopScene } = require('./scenes/shop-scene.js');
 
 
 let config = {
-    version: '0.0.2',
+    version: '0.1.0',
     title: 'WIP',
     width: 800,
     height: 600,
     parent: 'game',
-    scene: [ LoadScene, TitleScene, GameScene ],
+    scene: [ LoadScene, TitleScene, GameScene, ShopScene ],
     physics: {
         default: 'arcade',
         arcade: {

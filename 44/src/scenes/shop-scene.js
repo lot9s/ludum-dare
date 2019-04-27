@@ -6,20 +6,10 @@ class ShopScene extends Phaser.Scene {
         super({ key: "scene-shop" });
     }
 
-    init() {
-        /* TODO: */
-    }
-
-    create(data) {
-        /* TODO: */
-    }
-
-    preload() {
-        /* TODO: */
-    }
-
-    update(time, delta) {
-        /* TODO: */
+    create() {
+        /* dialogue box */
+        let messageBox = this.add.graphics({ fillStyle: { color: 0xffffff } });
+        messageBox.fillRoundedRect(32, 32, this.game.renderer.width - 64, this.game.renderer.height - 64, 8);
     }
 }
 

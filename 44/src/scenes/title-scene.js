@@ -23,12 +23,6 @@ class TitleScene extends Phaser.Scene {
         });
 
         buttonPlay.setOrigin(0.5);
-        
-        let buttonOptions = this.add.text(this.game.renderer.width / 2, 412, 'Options', {
-            fontSize: '24px'
-        });
-        
-        buttonOptions.setOrigin(0.5);
 
 
         /* audio */
@@ -62,17 +56,6 @@ class TitleScene extends Phaser.Scene {
             this.sfxTitle.stop();
             this.scene.start('scene-game'); 
         });
-
-        buttonOptions.setInteractive();
-        buttonOptions.on('pointerover', () => {
-            hoverSprite.setVisible(true);
-            hoverSprite.play('death-peak');
-            hoverSprite.x = buttonOptions.x - (buttonOptions.width / 2) - 32;
-            hoverSprite.y = buttonOptions.y;
-        });
-
-        buttonOptions.on('pointerout', () => { hoverSprite.setVisible(false); });
-        buttonOptions.on('pointerup', () =>  { console.log('Play | up'); });
     }
 }
 

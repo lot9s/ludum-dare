@@ -1,6 +1,7 @@
 const Phaser = require('phaser');
 
 
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'scene-game' });
@@ -39,6 +40,34 @@ class GameScene extends Phaser.Scene {
         });
 
         this.deathSprite.play('death-float');
+
+        /* pointer events */
+        rockSprite.setInteractive();
+        rockSprite.on('pointerup', () => { this.rockPaperScissors(0); });
+
+        paperSprite.setInteractive();
+        paperSprite.on('pointerup', () => { this.rockPaperScissors(1); });
+
+        scissorsSprite.setInteractive();
+        scissorsSprite.on('pointerup', () => { this.rockPaperScissors(2); });
+    }
+
+    rockPaperScissors(choice) {
+        /* 0 - rock; 1 - paper; 2 - scissors */
+        let deathChoice = Phaser.Math.RND.integerInRange(0,2);
+        console.log("rockPaperScissors(): choice=%d, deathChoice=%d", choice, deathChoice);
+
+        if (choice === deathChoice) {
+            /* TODO: implement tie */
+        }
+
+        /* implement win */
+        if ((choice === 0 && deathChoice === 2) || (choice === 1 && deathChoice === 0) || (choice === 2 && deathChioce === 1)) {
+            /* TODO: show shop icon as well as text saying you could keep going */
+            this.scene.start('scene-shop');
+        } else {
+            /* TODO: implement game over */
+        }
     }
 }
 

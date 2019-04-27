@@ -27,12 +27,12 @@ class LoadScene extends Phaser.Scene {
         this.load.audio('sfx-start', './static/res/sfx/start.wav');
         this.load.audio('sfx-title', './static/res/sfx/title.wav');
 
-        /* create loading bar */
-        let loadingBar = this.add.graphics({ fillStyle: { color: 0xffffff } });
+        /* progress bar */
+        let progressBar = this.add.graphics({ fillStyle: { color: 0xffffff } });
 
         /* loader events */
         this.load.on('progress', (percentage) => {
-            loadingBar.fillRect(0, this.game.renderer.height - 64, this.game.renderer.width * percentage, 32);
+            progressBar.fillRect(0, this.game.renderer.height - 64, this.game.renderer.width * percentage, 32);
         });
     }
 }
