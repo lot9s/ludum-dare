@@ -38,8 +38,23 @@ This is a tactical dating sim! Get it [here](https://ldjam.com/events/ludum-dare
 
 ## 43: An Offering
 
-Rather than a game, this would best be described as a short, contemplative interactive experience. Play it [here](https://lot9s.github.io/ludum-dare/38/).
+Rather than a game, this would best be described as a short, contemplative interactive experience. Play it [here](https://lot9s.github.io/ludum-dare/43/).
 
 ### Credits:
 * lot9s
+
+<br>
+
+
+## 44: What Death Has in Store
+
+Play it [here](https://lot9s.github.io/ludum-dare/44/).
+
+### Credits:
+* lot9s
+
+#### Music
+* "Video Game Coin.wav" (original, un-edited) by [harrietniamh](https://freesound.org/people/harrietniamh/sounds/415083/) ([LICENSE](https://creativecommons.org/licenses/by/3.0/))
+
+
 

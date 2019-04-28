@@ -1,0 +1,7 @@
+html, body {
+    text-align: center;
+}
+
+#game > canvas {
+	margin-top: 3em;
+}
