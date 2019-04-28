@@ -24,6 +24,8 @@ class LoadScene extends Phaser.Scene {
             frameWidth: 128
         });
 
+        this.load.audio('sfx-death', './static/res/sfx/death.ogg');
+        this.load.audio('sfx-point', './static/res/sfx/point.mp3');
         this.load.audio('sfx-shop', './static/res/sfx/shop.wav');
         this.load.audio('sfx-start', './static/res/sfx/start.wav');
         this.load.audio('sfx-title', './static/res/sfx/title.wav');

@@ -19,7 +19,7 @@ class GameScene extends Phaser.Scene {
         this.points = 0;
         this.wins = 0;
 
-        this.sfxTitle = {};
+        this.sfxPoint = {};
     }
 
     create() {
@@ -53,6 +53,9 @@ class GameScene extends Phaser.Scene {
         this.storeText = this.add.text(64, 368, "[Store]", { fontSize: '24px', fill: '#ffffff' });
         this.storeText.setVisible(false);
 
+        /* audio */
+        this.sfxPoint = this.sound.add('sfx-point', { volume: 0.75 });
+
         /* animations */
         this.anims.create({
             key: "death-float",
@@ -69,17 +72,17 @@ class GameScene extends Phaser.Scene {
         rockSprite.setInteractive();
         rockSprite.on('pointerup', () => { this.rockPaperScissors(0); });
         rockSprite.on('pointerout', () => { rockSprite.setTexture('rock-paper-scissors', 1); });
-        rockSprite.on('pointerover', () => { rockSprite.setTexture('rock-paper-scissors', 4); });
+        rockSprite.on('pointerover', () => { rockSprite.setTexture('rock-paper-scissors', 7); });
 
         paperSprite.setInteractive();
         paperSprite.on('pointerup', () => { this.rockPaperScissors(1); });
         paperSprite.on('pointerout', () => { paperSprite.setTexture('rock-paper-scissors', 0); });
-        paperSprite.on('pointerover', () => { paperSprite.setTexture('rock-paper-scissors', 3); });
+        paperSprite.on('pointerover', () => { paperSprite.setTexture('rock-paper-scissors', 6); });
 
         scissorsSprite.setInteractive();
         scissorsSprite.on('pointerup', () => { this.rockPaperScissors(2); });
         scissorsSprite.on('pointerout', () => { scissorsSprite.setTexture('rock-paper-scissors', 2); });
-        scissorsSprite.on('pointerover', () => { scissorsSprite.setTexture('rock-paper-scissors', 5); });
+        scissorsSprite.on('pointerover', () => { scissorsSprite.setTexture('rock-paper-scissors', 8); });
     }
 
     rockPaperScissors(choice) {
@@ -94,11 +97,16 @@ class GameScene extends Phaser.Scene {
 
         /* implement win */
         if ((choice === 0 && deathChoice === 2) || (choice === 1 && deathChoice === 0) || (choice === 2 && deathChoice === 1)) {
+            this.sfxPoint.play();
+
+            /* update score */
             this.points = Math.pow(2, this.wins);
             this.wins += 1;
             
+            /* update text */
             this.dialogueText.setText(this.dialogueTexts[2]);
 
+            /* display store button */
             this.storeText.setInteractive();
             this.storeText.on('pointerup', () => { this.scene.start('scene-shop', { 'points': this.points }); });
             this.storeText.setVisible(true);

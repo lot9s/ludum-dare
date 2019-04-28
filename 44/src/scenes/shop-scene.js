@@ -32,7 +32,11 @@ class ShopScene extends Phaser.Scene {
         messageBox.fillRoundedRect(32, 32, this.game.renderer.width - 64, this.game.renderer.height - 64, 8);
     
         /* text */
-        this.add.text(56, 64, "You have won a moderate amount of life\npoints from Death. You may choose to spend these\npoints on perks, but be sure that you do not\nspend too much. Heh heh...", {
+        let magnitudeText = " small ";
+        if (this.points >= 10) { magnitudeText = " large "; }
+        if (this.points >= 5 ) { magnitudeText = " moderate "; }
+        let descriptionText = "You have won a" +  magnitudeText + "amount of life\npoints from Death. You may choose to spend these\npoints on perks, but be sure that you do not\nspend too much. Heh heh...";
+        this.add.text(56, 64, descriptionText, {
             fontSize: '24px', 
             fill: '#000000'
         });
@@ -106,7 +110,7 @@ class ShopScene extends Phaser.Scene {
         buttonWin.on('pointerup', () => { 
             /* win the game */
             this.time.addEvent({
-                delay: 2000,
+                delay: 500,
                 callback: function() { 
                     this.sfxShop.stop();
 

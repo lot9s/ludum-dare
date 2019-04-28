@@ -27,8 +27,10 @@ class TitleScene extends Phaser.Scene {
 
 
         /* audio */
-        this.sfxStart = this.sound.add('sfx-start', { delay: 0.5, volume: 0.75 });
+        this.sfxStart = this.sound.add('sfx-start', { delay: 0.5, volume: 0.66 });
         this.sfxTitle = this.sound.add('sfx-title', { loop: true });
+
+        this.sfxTitle.play();
 
 
         /* animations */
