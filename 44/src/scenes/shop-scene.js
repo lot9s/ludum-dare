@@ -14,6 +14,9 @@ class ShopScene extends Phaser.Scene {
 
         this.points = 0;
         this.spentPoints = 0;
+
+        this.sfxShop = {};
+        this.sfxWin = {};
     }
 
     create(data) {
@@ -24,11 +27,11 @@ class ShopScene extends Phaser.Scene {
             this.perks[i].selected = false;
         }
 
-        /* shop box */
+        /* graphics */
         let messageBox = this.add.graphics({ fillStyle: { color: 0xffffff } });
         messageBox.fillRoundedRect(32, 32, this.game.renderer.width - 64, this.game.renderer.height - 64, 8);
     
-        /* perks */
+        /* text */
         this.add.text(56, 64, "You have won a moderate amount of life\npoints from Death. You may choose to spend these\npoints on perks, but be sure that you do not\nspend too much. Heh heh...", {
             fontSize: '24px', 
             fill: '#000000'
@@ -41,8 +44,14 @@ class ShopScene extends Phaser.Scene {
         let perk2 = this.add.text(56, 362, this.perks[2].description, { fontSize: '24px', fill: '#000000' });
         let perk3 = this.add.text(56, 402, this.perks[3].description, { fontSize: '24px', fill: '#000000' });
 
-        /* birth */
         let buttonWin = this.add.text(544, 496, "[Birth]", { fontSize: '36px', fontWeight: 'bold', fill: '#000000' });
+
+
+        /* audio */
+        this.sfxShop = this.sound.add('sfx-shop', { volume: 0.75, loop: true });
+        this.sfxWin = this.sound.add('sfx-win', { volume: 0.75 });
+
+        this.sfxShop.play();
 
         /* pointer events */
         perk0.setInteractive();
@@ -99,8 +108,14 @@ class ShopScene extends Phaser.Scene {
             this.time.addEvent({
                 delay: 2000,
                 callback: function() { 
-                    if (this.points - this.spentPoints <= 0) { this.scene.start('scene-death'); }
-                    this.scene.start('scene-title'); 
+                    this.sfxShop.stop();
+
+                    if (this.points - this.spentPoints <= 0) { 
+                        this.scene.start('scene-death'); 
+                    } else {
+                        this.sfxWin.play();
+                        this.scene.start('scene-title');
+                    }
                 },
                 callbackScope: this
             });

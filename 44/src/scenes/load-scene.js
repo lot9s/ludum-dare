@@ -24,8 +24,10 @@ class LoadScene extends Phaser.Scene {
             frameWidth: 128
         });
 
+        this.load.audio('sfx-shop', './static/res/sfx/shop.wav');
         this.load.audio('sfx-start', './static/res/sfx/start.wav');
         this.load.audio('sfx-title', './static/res/sfx/title.wav');
+        this.load.audio('sfx-win', './static/res/sfx/win.wav');
 
         /* progress bar */
         let progressBar = this.add.graphics({ fillStyle: { color: 0xffffff } });
