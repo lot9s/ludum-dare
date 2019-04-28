@@ -24,13 +24,14 @@ class LoadScene extends Phaser.Scene {
             frameWidth: 128
         });
 
+        /* audio */
         this.load.audio('sfx-death', './static/res/sfx/death.ogg');
         this.load.audio('sfx-point', './static/res/sfx/point.wav');
-        this.load.audio('sfx-shop', './static/res/sfx/shop.wav');
+        this.load.audio('sfx-shop', './static/res/sfx/shop.mp3');
         this.load.audio('sfx-start', './static/res/sfx/start.wav');
         this.load.audio('sfx-title', './static/res/sfx/title.wav');
         this.load.audio('sfx-tie', './static/res/sfx/tie.wav');
-        this.load.audio('sfx-win', './static/res/sfx/win.wav');
+        this.load.audio('sfx-win', './static/res/sfx/win.mp3');
 
         /* progress bar */
         let progressBar = this.add.graphics({ fillStyle: { color: 0xffffff } });

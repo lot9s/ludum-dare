@@ -16,7 +16,6 @@ class ShopScene extends Phaser.Scene {
         this.spentPoints = 0;
 
         this.sfxShop = {};
-        this.sfxWin = {};
     }
 
     create(data) {
@@ -53,8 +52,6 @@ class ShopScene extends Phaser.Scene {
 
         /* audio */
         this.sfxShop = this.sound.add('sfx-shop', { volume: 0.66 });
-        this.sfxWin = this.sound.add('sfx-win', { volume: 0.75 });
-
         this.sfxShop.play();
 
         /* pointer events */
@@ -112,13 +109,12 @@ class ShopScene extends Phaser.Scene {
             this.time.addEvent({
                 delay: 500,
                 callback: function() { 
-                    this.sfxShop.pause();
+                    this.sfxShop.stop();
 
                     if (this.points - this.spentPoints <= 0) { 
                         this.scene.start('scene-death'); 
                     } else {
-                        this.sfxWin.play();
-                        this.scene.start('scene-title');
+                        this.scene.start('scene-life');
                     }
                 },
                 callbackScope: this

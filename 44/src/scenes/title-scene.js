@@ -12,6 +12,11 @@ class TitleScene extends Phaser.Scene {
     create() {
         this.add.image(0, 0, 'background-title').setOrigin(0);
 
+        /* 'O' */
+        let oSprite = this.add.sprite(460, 265, 'death', 9);
+        oSprite.setScale(0.37);
+        oSprite.setDepth(1);
+
         let hoverSprite = this.add.sprite(0, 0, 'death', 3);
         hoverSprite.setScale(0.33);
         hoverSprite.setVisible(false);
