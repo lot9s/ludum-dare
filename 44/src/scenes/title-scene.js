@@ -26,7 +26,7 @@ class TitleScene extends Phaser.Scene {
 
 
         /* audio */
-        this.sfxStart = this.sound.add('sfx-start', { delay: 0.5 });
+        this.sfxStart = this.sound.add('sfx-start', { delay: 0.5, volume: 0.75 });
         this.sfxTitle = this.sound.add('sfx-title', { loop: true });
 
 
@@ -52,7 +52,7 @@ class TitleScene extends Phaser.Scene {
 
         buttonPlay.on('pointerout', () => { hoverSprite.setVisible(false); });
         buttonPlay.on('pointerup', () =>  { 
-            /*this.sfxStart.play();*/
+            this.sfxStart.play();
             this.sfxTitle.stop();
             this.scene.start('scene-game'); 
         });

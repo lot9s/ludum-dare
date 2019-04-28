@@ -7,9 +7,20 @@ class GameScene extends Phaser.Scene {
         super({ key: 'scene-game' });
 
         this.deathSprite = {};
+        this.dialogueText = {};
+
+        this.dialogueTexts = [
+            `Death is feeling...playful. Precious soul, choose\nwisely! Your as yet unlived life is at stake.`,
+            `"Double...or...Death?"`
+        ];
+
+        this.points = 0;
+
+        this.sfxTitle = {};
     }
 
-    create() {
+    create(data) {
+        /* death */
         this.deathSprite = this.add.sprite(this.game.renderer.width / 2, 160, 'death', 0);
 
         /* input icons */
@@ -29,6 +40,12 @@ class GameScene extends Phaser.Scene {
         let messageBox = this.add.graphics({ fillStyle: { color: 0xffffff } });
         messageBox.fillRoundedRect(32, this.game.renderer.height - 160, this.game.renderer.width - 64, 128, 8);
 
+        /* text */
+        this.dialogueText = this.add.text(48, 480, this.dialogueTexts[0], {
+            fontSize: '24px',
+            fill: '#000000'
+        });
+
         /* animations */
         this.anims.create({
             key: "death-float",
@@ -44,12 +61,18 @@ class GameScene extends Phaser.Scene {
         /* pointer events */
         rockSprite.setInteractive();
         rockSprite.on('pointerup', () => { this.rockPaperScissors(0); });
+        rockSprite.on('pointerout', () => { rockSprite.setTexture('rock-paper-scissors', 1); });
+        rockSprite.on('pointerover', () => { rockSprite.setTexture('rock-paper-scissors', 4); });
 
         paperSprite.setInteractive();
         paperSprite.on('pointerup', () => { this.rockPaperScissors(1); });
+        paperSprite.on('pointerout', () => { paperSprite.setTexture('rock-paper-scissors', 0); });
+        paperSprite.on('pointerover', () => { paperSprite.setTexture('rock-paper-scissors', 3); });
 
         scissorsSprite.setInteractive();
         scissorsSprite.on('pointerup', () => { this.rockPaperScissors(2); });
+        scissorsSprite.on('pointerout', () => { scissorsSprite.setTexture('rock-paper-scissors', 2); });
+        scissorsSprite.on('pointerover', () => { scissorsSprite.setTexture('rock-paper-scissors', 5); });
     }
 
     rockPaperScissors(choice) {
@@ -62,9 +85,10 @@ class GameScene extends Phaser.Scene {
         }
 
         /* implement win */
-        if ((choice === 0 && deathChoice === 2) || (choice === 1 && deathChoice === 0) || (choice === 2 && deathChioce === 1)) {
+        if ((choice === 0 && deathChoice === 2) || (choice === 1 && deathChoice === 0) || (choice === 2 && deathChoice === 1)) {
             /* TODO: show shop icon as well as text saying you could keep going */
-            this.scene.start('scene-shop');
+            this.points += 1;
+            this.scene.start('scene-shop', { 'points': this.points });
         } else {
             /* TODO: implement game over */
         }
