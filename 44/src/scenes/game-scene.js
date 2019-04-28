@@ -20,6 +20,7 @@ class GameScene extends Phaser.Scene {
         this.wins = 0;
 
         this.sfxPoint = {};
+        this.sfxTie = {};
     }
 
     create() {
@@ -55,6 +56,7 @@ class GameScene extends Phaser.Scene {
 
         /* audio */
         this.sfxPoint = this.sound.add('sfx-point', { volume: 0.75 });
+        this.sfxTie = this.sound.add('sfx-tie', { volume: 0.75 });
 
         /* animations */
         this.anims.create({
@@ -91,6 +93,7 @@ class GameScene extends Phaser.Scene {
 
         /* implement tie */
         if (choice === deathChoice) {
+            this.sfxTie.play();
             this.dialogueText.setText(this.dialogueTexts[1]);
             return;
         }

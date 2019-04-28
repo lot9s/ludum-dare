@@ -52,7 +52,7 @@ class ShopScene extends Phaser.Scene {
 
 
         /* audio */
-        this.sfxShop = this.sound.add('sfx-shop', { volume: 0.75, loop: true });
+        this.sfxShop = this.sound.add('sfx-shop', { volume: 0.66 });
         this.sfxWin = this.sound.add('sfx-win', { volume: 0.75 });
 
         this.sfxShop.play();
@@ -112,7 +112,7 @@ class ShopScene extends Phaser.Scene {
             this.time.addEvent({
                 delay: 500,
                 callback: function() { 
-                    this.sfxShop.stop();
+                    this.sfxShop.pause();
 
                     if (this.points - this.spentPoints <= 0) { 
                         this.scene.start('scene-death'); 
