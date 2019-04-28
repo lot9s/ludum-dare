@@ -2,6 +2,7 @@ const Phaser = require('phaser');
 
 const { DeathScene } = require('./scenes/death-scene.js');
 const { GameScene } = require('./scenes/game-scene.js');
+const { LifeScene } = require('./scenes/life-scene.js');
 const { LoadScene } = require('./scenes/load-scene.js');
 const { TitleScene } = require('./scenes/title-scene.js');
 const { ShopScene } = require('./scenes/shop-scene.js');
@@ -13,7 +14,7 @@ let config = {
     width: 800,
     height: 600,
     parent: 'game',
-    scene: [ LoadScene, TitleScene, GameScene, ShopScene, DeathScene ],
+    scene: [ LoadScene, TitleScene, GameScene, ShopScene, DeathScene, LifeScene ],
     physics: {
         default: 'arcade',
         arcade: {
