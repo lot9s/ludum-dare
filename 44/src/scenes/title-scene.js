@@ -18,11 +18,12 @@ class TitleScene extends Phaser.Scene {
 
 
         /* text */
+        this.add.text(this.game.renderer.width / 2, this.game.renderer.height / 3, 'What Death Has', { fontSize: '64px' }).setOrigin(0.5);
+        this.add.text(this.game.renderer.width / 2, (this.game.renderer.height / 3) + 64, 'in Store', { fontSize: '64px' }).setOrigin(0.5);
+
         let buttonPlay = this.add.text(this.game.renderer.width / 2, 380, 'Play', {
             fontSize: '24px'
-        });
-
-        buttonPlay.setOrigin(0.5);
+        }).setOrigin(0.5);
 
 
         /* audio */

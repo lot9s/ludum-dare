@@ -10,17 +10,23 @@ class GameScene extends Phaser.Scene {
 
         this.dialogueTexts = [
             `Death is feeling...playful. Precious soul, choose\nwisely! Your as yet unlived life is at stake.`,
+            `"A...tie!"`,
             `"Double...or...Death?"`
         ];
 
         this.storeText = {};
 
         this.points = 0;
+        this.wins = 0;
 
         this.sfxTitle = {};
     }
 
     create() {
+        /* --- reset --- */
+        this.points = 0;
+        this.wins = 0;
+
         /* death */
         this.deathSprite = this.add.sprite(this.game.renderer.width / 2, 160, 'death', 0);
 
@@ -43,7 +49,9 @@ class GameScene extends Phaser.Scene {
 
         /* text */
         this.dialogueText = this.add.text(48, 480, this.dialogueTexts[0], { fontSize: '24px', fill: '#000000' });
+        
         this.storeText = this.add.text(64, 368, "[Store]", { fontSize: '24px', fill: '#ffffff' });
+        this.storeText.setVisible(false);
 
         /* animations */
         this.anims.create({
@@ -77,17 +85,23 @@ class GameScene extends Phaser.Scene {
     rockPaperScissors(choice) {
         /* 0 - rock; 1 - paper; 2 - scissors */
         let deathChoice = Phaser.Math.RND.integerInRange(0,2);
-        console.log("rockPaperScissors(): choice=%d, deathChoice=%d", choice, deathChoice);
 
+        /* implement tie */
         if (choice === deathChoice) {
-            /* TODO: implement tie */
+            this.dialogueText.setText(this.dialogueTexts[1]);
+            return;
         }
 
         /* implement win */
         if ((choice === 0 && deathChoice === 2) || (choice === 1 && deathChoice === 0) || (choice === 2 && deathChoice === 1)) {
-            /* TODO: show shop icon as well as text saying you could keep going */
-            this.points += 1;
-            this.scene.start('scene-shop', { 'points': this.points });
+            this.points = Math.pow(2, this.wins);
+            this.wins += 1;
+            
+            this.dialogueText.setText(this.dialogueTexts[2]);
+
+            this.storeText.setInteractive();
+            this.storeText.on('pointerup', () => { this.scene.start('scene-shop', { 'points': this.points }); });
+            this.storeText.setVisible(true);
         
         /* implement loss */
         } else {
