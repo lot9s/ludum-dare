@@ -1,5 +1,6 @@
 const Phaser = require('phaser');
 
+const { DeathScene } = require('./scenes/death-scene.js');
 const { GameScene } = require('./scenes/game-scene.js');
 const { LoadScene } = require('./scenes/load-scene.js');
 const { TitleScene } = require('./scenes/title-scene.js');
@@ -12,19 +13,15 @@ let config = {
     width: 800,
     height: 600,
     parent: 'game',
-    scene: [ LoadScene, TitleScene, GameScene, ShopScene ],
+    scene: [ LoadScene, TitleScene, GameScene, ShopScene, DeathScene ],
     physics: {
         default: 'arcade',
         arcade: {
             debug: true,
-            gravity: {
-                y: 200
-            }
+            gravity: { y: 200 }
         }
     },
-    render: {
-        pixelArt: true
-    },
+    render: { pixelArt: true },
     type: Phaser.AUTO, 
 };
 

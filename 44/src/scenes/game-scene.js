@@ -1,7 +1,6 @@
 const Phaser = require('phaser');
 
 
-
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'scene-game' });
@@ -14,12 +13,14 @@ class GameScene extends Phaser.Scene {
             `"Double...or...Death?"`
         ];
 
+        this.storeText = {};
+
         this.points = 0;
 
         this.sfxTitle = {};
     }
 
-    create(data) {
+    create() {
         /* death */
         this.deathSprite = this.add.sprite(this.game.renderer.width / 2, 160, 'death', 0);
 
@@ -41,10 +42,8 @@ class GameScene extends Phaser.Scene {
         messageBox.fillRoundedRect(32, this.game.renderer.height - 160, this.game.renderer.width - 64, 128, 8);
 
         /* text */
-        this.dialogueText = this.add.text(48, 480, this.dialogueTexts[0], {
-            fontSize: '24px',
-            fill: '#000000'
-        });
+        this.dialogueText = this.add.text(48, 480, this.dialogueTexts[0], { fontSize: '24px', fill: '#000000' });
+        this.storeText = this.add.text(64, 368, "[Store]", { fontSize: '24px', fill: '#ffffff' });
 
         /* animations */
         this.anims.create({
@@ -89,8 +88,10 @@ class GameScene extends Phaser.Scene {
             /* TODO: show shop icon as well as text saying you could keep going */
             this.points += 1;
             this.scene.start('scene-shop', { 'points': this.points });
+        
+        /* implement loss */
         } else {
-            /* TODO: implement game over */
+            this.scene.start('scene-death');
         }
     }
 }
