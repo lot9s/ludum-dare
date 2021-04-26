@@ -86,7 +86,7 @@ margin_top = 36.0
 margin_right = 273.0
 margin_bottom = 68.0
 custom_fonts/font = SubResource( 4 )
-text = "Hold space to Fire"
+text = "Hold Space to Fire"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="StatusContainer"]
 visible = false

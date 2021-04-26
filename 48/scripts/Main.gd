@@ -13,7 +13,6 @@ var score
 # lifecycle methods
 func _ready():
 	OS.set_window_position(Vector2(128, 0))
-	new_game()
 
 
 # signal callbacks
@@ -49,8 +48,9 @@ func game_over(msg):
 func new_game():
 	score = 0
 
-	$GUI/StatusContainer/HBoxContainer/ScoreContainer/Score.text = str(score)
 	$EndGUI.hide()
+	$EndGUI/Button.text = "Play Again!"
+	$GUI/StatusContainer/HBoxContainer/ScoreContainer/Score.text = str(score)
 
 	$Player.init($StartPosition.position)
 
