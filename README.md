@@ -74,7 +74,7 @@ Play it [here](https://lot9s.github.io/ludum-dare/48/).
 * Kitty_Mama_
 
 #### BGM / SFX
-* Royalty Free Music from Bensound
+* "116 bpm oldschool electronica": https://freesound.org/people/brudelarge/sounds/394721/
 * "Badass Victory": https://freesound.org/people/PearceWilsonKing/sounds/249524/
 * "Male_Nooo_02": https://freesound.org/people/Artmasterrich/sounds/345466/
 * "ship fire.wav": https://freesound.org/people/Nbs%20Dark/sounds/83560/
