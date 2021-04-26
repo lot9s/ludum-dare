@@ -1,0 +1,43 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://assets/enemy-bat-fly-2.png" type="Texture" id=1]
+[ext_resource path="res://scripts/Enemy.gd" type="Script" id=2]
+[ext_resource path="res://Bullet.tscn" type="PackedScene" id=3]
+[ext_resource path="res://assets/enemy-bat-fly-1.png" type="Texture" id=4]
+
+[sub_resource type="SpriteFrames" id=1]
+animations = [ {
+"frames": [ ExtResource( 4 ), ExtResource( 1 ) ],
+"loop": true,
+"name": "bat-fly",
+"speed": 2.5
+} ]
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 32, 32 )
+
+[node name="Enemy" type="Area2D" groups=[
+"enemies",
+]]
+collision_mask = 0
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_group_": true
+}
+Bullet = ExtResource( 3 )
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="."]
+frames = SubResource( 1 )
+animation = "bat-fly"
+playing = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 2 )
+
+[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="."]
+
+[node name="BulletTimer" type="Timer" parent="."]
+wait_time = 0.66
+[connection signal="body_entered" from="." to="." method="_on_Enemy_body_entered"]
+[connection signal="screen_exited" from="VisibilityNotifier2D" to="." method="_on_VisibilityNotifier2D_screen_exited"]
+[connection signal="timeout" from="BulletTimer" to="." method="_on_BulletTimer_timeout"]

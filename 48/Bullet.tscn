@@ -1,0 +1,73 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://assets/bullet-player.png" type="Texture" id=1]
+[ext_resource path="res://assets/bullet-enemy.png" type="Texture" id=3]
+
+[sub_resource type="GDScript" id=4]
+script/source = "extends RigidBody2D
+
+
+# member variables
+var instanced_by
+
+var speed = 1000
+var velocity
+
+
+# lifecycle methods
+func _ready():
+	pass # Replace with function body.
+
+func _process(delta):
+	position += velocity * delta
+
+
+# signal callbacks
+func _on_VisibilityNotifier2D_screen_exited():
+	queue_free()
+
+
+# helper methods
+#	dir: -1 for up, 1 for down
+func init(pos, dir, creator=\"\"):
+	position = pos
+	position += Vector2(0, $CollisionShape2D.shape.extents.y * 5).rotated(dir)
+	velocity = Vector2(0, speed).rotated(dir)
+	instanced_by = creator
+	if creator == \"Main\":
+		$AnimatedSprite.animation = \"player\"
+	else:
+		$AnimatedSprite.animation = \"default\"
+"
+
+[sub_resource type="SpriteFrames" id=3]
+animations = [ {
+"frames": [ ExtResource( 3 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+}, {
+"frames": [ ExtResource( 1 ) ],
+"loop": true,
+"name": "player",
+"speed": 5.0
+} ]
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 8, 8 )
+
+[node name="Bullet" type="RigidBody2D"]
+script = SubResource( 4 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="."]
+frames = SubResource( 3 )
+animation = "player"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 2 )
+
+[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="."]
+[connection signal="screen_exited" from="VisibilityNotifier2D" to="." method="_on_VisibilityNotifier2D_screen_exited"]
